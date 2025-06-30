@@ -1,0 +1,9 @@
+[2025-06-30 16:32:01] GET /news?page=1
+[2025-06-30 16:32:02] GET /weather/today
+[2025-06-30 16:32:03] GET /nusrat-sena
+[2025-06-30 16:32:03] Host: mauritania.gov
+[2025-06-30 16:32:03] Response: 200 OK
+[2025-06-30 16:32:03] Body: {
+  "agency": "Voice of the People",
+  "location": "Nouakchott"
+}
