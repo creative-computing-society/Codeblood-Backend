@@ -4,7 +4,13 @@ Welcome to our personal hell.
 Here is the structural backdown of what's where
 ```
 .
-├── app
+├── main.py                 # entry_point!()
+├── config.py               # Configuration for random shit
+├── DockerFile
+├── README.md               # @self
+└── requirements.txt        # pip install -r requirements.txt
+│
+├── app                     # Code with basic neccessities
 │   ├── auth
 │   │   ├── middleware.py   # Middleware which gets the Request Header X-SESSION-ID
 │   │   ├── routes.py       # /login /auth /logout endpoints
@@ -14,14 +20,10 @@ Here is the structural backdown of what's where
 │   └── socketio
 │       ├── handlers.py     # Socket events for (connect, disconnect)
 │       └── socket_map.py
-├── config.py               # Configuration for random shit
-├── DockerFile
-├── main.pyl                # entry_point!()
+│
 ├── phase1                  # Phase 1 specific code here, this will be turned off when phase1 is over
 │   ├── assets
 │   │   └── answers.json    # don't get this file leaked
 │   └── socketio
 │       └── handlers.py     # Socket events for (submit_answer, get_nation_status)
-├── README.md               # @self
-└── requirements.txt        # pip install -r requirements.txt
 ```
