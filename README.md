@@ -4,28 +4,26 @@ Welcome to our personal hell.
 Here is the structural backdown of what's where
 ```
 .
-├── main.py                 # entry_point!()
-├── config.py               # Configuration for random shit
+├── main.py               # entry_point!()
+├── config.py             # App configuration
 ├── DockerFile
-├── README.md               # @self
-└── requirements.txt        # pip install -r requirements.txt
-│
-├── app                     # Code with basic neccessities
-│   ├── auth
-│   │   ├── middleware.py   # Middleware which gets the Request Header X-SESSION-ID
-│   │   ├── routes.py       # /login /auth /logout endpoints
-│   │   └── session.py      # interacts with sessions collection
-│   ├── db
-│   │   └── mongo.py        # has all the collections, import this to access one
-│   └── socketio
-│       ├── handlers.py     # Socket events for (connect, disconnect)
-│       └── socket_map.py
-│
-├── phase1                  # Phase 1 specific code here, this will be turned off when phase1 is over
-│   ├── assets
-│   │   └── answers.json    # don't get this file leaked
-│   └── socketio
-│       └── handlers.py     # Socket events for (submit_answer, get_nation_status)
+├── README.md             # @self
+├── requirements.txt      # pip install -r requirements.txt
+├── app                   # App - Stuff for basic user functionality
+│   ├── __init__.py       # App Bundler
+│   ├── middleware.py     # HTTP Middlewares
+│   ├── routes.py         # HTTP handlers
+│   ├── sockets.py        # Handler of socket events
+│   ├── db.py             # Collections of the phase
+│   └── db_interface.py   # Functions which expose the db collections
+└── phase1
+    ├── __init__.py       # Phase 1 Bundler
+    ├── db.py
+    ├── db_interface.py
+    ├── sockets.py
+    └── assets
+        └── answers.json  # TOP SECRET
+
 ```
 
 # Todo
