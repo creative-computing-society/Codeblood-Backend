@@ -2,6 +2,7 @@
 Welcome to our personal hell.
 
 Here is the structural backdown of what's where
+```
 .
 ├── app
 │   ├── auth
@@ -23,3 +24,4 @@ Here is the structural backdown of what's where
 │       └── handlers.py     # Socket events for (submit_answer, get_nation_status)
 ├── README.md               # @self
 └── requirements.txt        # pip install -r requirements.txt
+```
