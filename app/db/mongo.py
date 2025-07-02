@@ -16,3 +16,4 @@ teams_col = db["teams"]
 phase1_db = client["phase1_event"]
 
 nations_col = db["nations"]
+sockets_col = db["socket_ids"]

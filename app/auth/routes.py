@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 from starlette.responses import JSONResponse
 from authlib.integrations.starlette_client import OAuth
+
+from app.db.mongo import users_col
+from app.auth.session import generate_session_token
 import os
 
 from config import IS_DEV
@@ -16,16 +19,16 @@ router = APIRouter()
 oauth = OAuth()
 
 oauth.register(
-    name='google',
+    name="google",
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
     client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'},
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
 )
 
 @router.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for('auth')  # this will be the callback
+    redirect_uri = request.url_for("auth")  # this will be the callback
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 def validate_email(email: str):
