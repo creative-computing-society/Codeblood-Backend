@@ -1,13 +1,16 @@
 from typing import Any, Dict, Optional
+from logging import getLogger
 from socketio import AsyncServer
 
 from app.db_interface import save_socket, remove_socket
 
+logger = getLogger(__name__)
+
 
 class WebSocketHandler:
     def __init__(
-            self,
-            sio: AsyncServer,
+        self,
+        sio: AsyncServer,
     ):
         self.sio = sio
 
@@ -16,7 +19,7 @@ class WebSocketHandler:
 
     @staticmethod
     async def connect(
-            sid: str, environ: Dict[str, Any], auth: Optional[Dict[str, Any]]
+        sid: str, environ: Dict[str, Any], auth: Optional[Dict[str, Any]]
     ) -> Optional[bool]:
         session_id = auth.get("session_id") if auth else None
         if not session_id:

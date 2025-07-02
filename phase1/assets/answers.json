@@ -1,17 +1,6 @@
-[
-    {
-      "nation_id": "nation_001",
-      "answer": "pyramids",
-      "difficulty": "easy"
-    },
-    {
-      "nation_id": "nation_002",
-      "answer": "mountfuji",
-      "difficulty": "medium"
-    },
-    {
-      "nation_id": "nation_003",
-      "answer": "mia khalifa",
-      "difficulty": "hard"
-    }
-]
+{
+  "nation_001": {
+    "answers": "pyramids",
+    "difficulty": "easy"
+  }
+}

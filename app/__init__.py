@@ -5,5 +5,5 @@ from .sockets import WebSocketHandler
 bundle = {
     "router": router,
     "middleware": SessionMiddleware,
-    "socket_handler": WebSocketHandler
+    "socket_handler": WebSocketHandler,
 }

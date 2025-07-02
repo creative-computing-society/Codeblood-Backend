@@ -1,14 +1,23 @@
-from fastapi import APIRouter
+import os
+from logging import getLogger
+
+from fastapi import APIRouter, Header, Request
 from starlette.responses import JSONResponse
 from authlib.integrations.starlette_client import OAuth
-import os
+
 from config import IS_DEV
-from fastapi import Header, Request
-from .db_interface import generate_session_token, delete_session, remove_all_sockets, \
-    get_user_id_create_user_if_doesnt_exist
+from .db_interface import (
+    generate_session_token,
+    delete_session,
+    remove_all_sockets,
+    get_user_id_create_user_if_doesnt_exist,
+)
 
 router = APIRouter()
 oauth = OAuth()
+logger = getLogger(__name__)
+
+
 oauth.register(
     name="google",
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
@@ -17,15 +26,18 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-@router.get("/login")
-async def login(request: Request):
-    redirect_uri = request.url_for("auth")  # this will be the callback
-    return await oauth.google.authorize_redirect(request, redirect_uri)
 
 def validate_email(email: str):
     if IS_DEV:
         return email.endswith("@thapar.edu") or email.endswith("@gmail.com")
     return email.endswith("@thapar.edu")
+
+
+@router.get("/login")
+async def login(request: Request):
+    redirect_uri = request.url_for("auth")  # this will be the callback
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
 
 @router.get("/auth")
 async def auth(request: Request):
@@ -42,12 +54,13 @@ async def auth(request: Request):
     user_id = get_user_id_create_user_if_doesnt_exist(email, user_info["name"])
     session_token = generate_session_token(str(user_id))
 
-    return JSONResponse({ "redirect_link": f"oauth?session_id={session_token}" })
+    return JSONResponse({"redirect_link": f"oauth?session_id={session_token}"})
+
 
 @router.post("/logout")
 async def logout(request: Request, session_id: str = Header(..., alias="X-Session-ID")):
     deleted = delete_session(session_id)
-    
+
     if deleted.deleted_count != 1:
         return {"status": "session_not_found"}
 

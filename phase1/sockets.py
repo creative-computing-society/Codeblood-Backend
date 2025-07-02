@@ -3,21 +3,32 @@ from asyncio import gather
 from os import path
 from typing import Any, Dict
 from socketio import AsyncServer
+from logging import getLogger
 
-from app.db_interface import assign_team_points
 from .db_interface import get_nation_via_id, capture_nation, get_all_nations
-from config import DIFFICULTY_TO_POINTS
 
-ANSWER_JSON_FILE = path.join("phase1", "assets", "answers.json")
+from config import DIFFICULTY_TO_POINTS
+from app.db_interface import assign_team_points
+
+
+ANSWER_JSON_FILE = path.join(path.dirname(__file__), "assets", "answers.json")
+logger = getLogger("phase1")
+
+
 if not path.exists(ANSWER_JSON_FILE):
     raise FileNotFoundError("answers.json file not found")
 
-
 # Load answers once at startup
 with open(ANSWER_JSON_FILE) as f:
-    ANSWERS: Dict[str, str] = {
-        entry["nation_id"]: entry["answer"] for entry in json.load(f)
-    }
+    ANSWERS: Dict[str, Dict[str, str]] = json.load(f)
+
+# {
+# "nation_001" : {
+#       "answers" : "yes",
+#       "difficulty": no
+# },
+# "nation_002" : "no"
+# }
 
 
 class WebSocketHandler:
@@ -31,40 +42,50 @@ class WebSocketHandler:
         self.sio.on("submit_answer", self.submit_answer)
         self.sio.on("get_nation_status", self.get_nation_status)
 
-    async def _validate_answer(self, nation_id, submitted_answer, team_name):
+    async def _validate_answer(
+        self, nation_id: str, submitted_answer: str, team_name: str
+    ):
         result = True
-        if not nation_id:
+        if nation_id == "":
             await self.sio.emit("error", {"detail": "Nation ID is None!"})
             result = False
 
-        if not submitted_answer:
+        if submitted_answer == "":
             await self.sio.send({"detail": "Answer cannot be None!"})
             result = False
 
-        if not team_name:
+        if team_name == "":
             await self.sio.send({"detail": "Haan haan, bina team name ke kaam karenge"})
             result = False
 
         return result
 
     async def submit_answer(self, sid: str, data: Dict[str, Any]) -> None:
-        nation_id = data.get("nation_id")
-        submitted_answer = data.get("answer")
-        team_name = data.get("team_name")
+        nation_id: str = data.get("nation_id", "")
+        submitted_answer: str = data.get("answer", "")
+        team_name: str = data.get("team_name", "")
 
         if not await self._validate_answer(nation_id, submitted_answer, team_name):
             return
 
-        correct_answer = self.ANSWERS.get(nation_id)
+        nation = self.ANSWERS.get(nation_id)
+
+        if nation is None:
+            await self.sio.emit("answer_response", {"status": "invalid_nation"}, to=sid)
+            logger.error(
+                f"Missing or invalid nation was passed! Nation ID: {nation_id}"
+            )
+            return
+
+        correct_answer = nation.get("answer")
+
         if not correct_answer:
             await self.sio.emit("answer_response", {"status": "invalid_nation"}, to=sid)
             return
 
         nation_doc = get_nation_via_id(nation_id)
         if not nation_doc:
-            await self.sio.emit(
-                "answer_response", {"status": "invalid_nation"}, to=sid
-            )
+            await self.sio.emit("answer_response", {"status": "invalid_nation"}, to=sid)
             return
 
         if nation_doc.get("captured"):
@@ -73,12 +94,14 @@ class WebSocketHandler:
             )
             return
 
-        if not submitted_answer.strip().lower() == correct_answer.lower():
+        if submitted_answer.strip().lower() != correct_answer.lower():
             await self.sio.emit("answer_response", {"status": "incorrect"}, to=sid)
             return
 
         capture_nation(nation_id, team_name)
-        assign_team_points(team_name, DIFFICULTY_TO_POINTS[correct_answer["difficulty"]])
+        assign_team_points(
+            team_name, DIFFICULTY_TO_POINTS[nation.get("difficulty", "easy")]
+        )
 
         await self.sio.emit(
             "nation_captured", {"nation_id": nation_id, "captured_by": team_name}

@@ -1,22 +1,24 @@
 import uvicorn
 from fastapi import FastAPI
 from socketio import AsyncServer, ASGIApp
+from logging import getLogger
 
 from config import IS_DEV, phase, PHASE_TO_BUNDLES
 from app import bundle as appBundle
 from phase1 import bundle as phase1Bundle
 
-Bundles = {
-    "App": appBundle,
-    "Phase 1": phase1Bundle
-}
+Bundles = {"App": appBundle, "Phase 1": phase1Bundle}
 
 sio = AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI()
 
+logger = getLogger(__name__)
+
+
 @fastapi_app.get("/test")
 async def test_backend():
     return {"message": "YAY...CHALRA HAI BHAI LOG"}
+
 
 def load_bundle(package_data):
     print()
@@ -27,14 +29,17 @@ def load_bundle(package_data):
     if "socket_handler" in package_data:
         package_data["socket_handler"](sio)
 
+
 if __name__ == "__main__":
     fastapi_app.state.sio = sio
 
-    print("Phase:", phase, end='')
+    logger.info(f"Phase: {phase}")
     bundles = PHASE_TO_BUNDLES[phase]
+
     for bundle in bundles:
         load_bundle(Bundles[bundle])
-        print("Loaded bundle:", bundle, end='')
+        logger.info(f"Loaded bundle: {bundle}")
+
     print()
 
     app = ASGIApp(sio, other_asgi_app=fastapi_app)

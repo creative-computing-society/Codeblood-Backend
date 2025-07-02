@@ -2,15 +2,17 @@ from .db import users, socket_connections, token_sessions, teams
 import uuid
 from datetime import datetime, timedelta
 
+NAMESPACE = uuid.UUID("5d8b4e77-52f7-4c84-a12f-1234567890ab")
+
+
 # Users
 def find_user_via_email(email: str):
     return users.find_one({"email": email})
 
+
 def insert_user(email: str, name: str) -> str:
-    return users.insert_one({
-        "email": email,
-        "name": name
-    }).inserted_id
+    return users.insert_one({"email": email, "name": name}).inserted_id
+
 
 def get_user_id_create_user_if_doesnt_exist(email: str, name: str) -> str:
     existing_user = find_user_via_email(email)
@@ -18,16 +20,17 @@ def get_user_id_create_user_if_doesnt_exist(email: str, name: str) -> str:
         return insert_user(email, name)
     return existing_user["_id"]
 
+
 # Socket Connections
 def save_socket(session_id: str, socket_id: str):
     socket_connections.update_one(
-        {"_id": socket_id},
-        {"$set": {"session_id": session_id}},
-        upsert=True
+        {"_id": socket_id}, {"$set": {"session_id": session_id}}, upsert=True
     )
+
 
 def remove_socket(socket_id: str):
     socket_connections.delete_one({"_id": socket_id})
+
 
 async def remove_all_sockets(sio, session_id: str):
     sockets = socket_connections.find({"session_id": session_id})
@@ -36,20 +39,23 @@ async def remove_all_sockets(sio, session_id: str):
         await sio.disconnect(socket_id)
         remove_socket(socket_id)
 
+
 def get_all_sockets() -> list[str]:
     return [doc["_id"] for doc in socket_connections.find({})]
 
+
 # Token sessions
-NAMESPACE = uuid.UUID("5d8b4e77-52f7-4c84-a12f-1234567890ab")
 def generate_session_token(user_id: str) -> str:
     session_id = str(uuid.uuid5(NAMESPACE, user_id + str(datetime.now())))
 
-    token_sessions.insert_one({
-        "_id": session_id,
-        "user_id": user_id,
-        "created_at": datetime.now(),
-        "expires_at": datetime.now() + timedelta(hours=24)
-    })
+    token_sessions.insert_one(
+        {
+            "_id": session_id,
+            "user_id": user_id,
+            "created_at": datetime.now(),
+            "expires_at": datetime.now() + timedelta(hours=24),
+        }
+    )
 
     return session_id
 
@@ -60,8 +66,10 @@ def validate_session(session_id: str) -> str | None:
         return session["user_id"]
     return None
 
+
 def delete_session(session_id: str):
     return token_sessions.delete_one({"_id": session_id})
+
 
 # Teams
 def assign_team_points(team_name: str, points: int):
