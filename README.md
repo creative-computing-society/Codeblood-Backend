@@ -27,3 +27,60 @@ Here is the structural backdown of what's where
 │   └── socketio
 │       └── handlers.py     # Socket events for (submit_answer, get_nation_status)
 ```
+
+# Todo
+- Track question attempts
+- Point system
+
+# Conditionality
+## App (For All)
+### HTTP Request
+- /login
+- /auth
+- /logout
+### DB Collections
+- Team
+- User
+- SocketId (For socket_id <--> user_id relation for an active connection)
+- Sessions (For tokens and shit)
+### Socket Request
+NONE
+
+## Phase 0 (Joining)
+### HTTP Request
+- /register (User registeration)
+- /team_create (Team registeration)
+- /join_team
+### DB Collection
+### HTTP Request
+- /leaderboard
+### DB Collections
+### Socket Requests
+NONE
+### Socket Request
+NONE
+
+## Phase 1 (Game 1)
+### HTTP Request
+### DB Collections
+- Nation
+- Activity Log
+### Socket Request
+- submit_answer
+- get_nation_status
+
+## Phase 2 (Game 2)
+### HTTP Request
+### DB Collections
+### Socket Request
+
+## Phase 3 (Game 3)
+### HTTP Request
+### DB Collections
+### Socket Request
+
+## Phase 4 (After game)
+### HTTP Request
+- /leaderboard
+### DB Collections
+### Socket Request
