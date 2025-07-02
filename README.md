@@ -50,12 +50,7 @@ NONE
 - /team_create (Team registeration)
 - /join_team
 ### DB Collection
-### HTTP Request
-- /leaderboard
-### DB Collections
 ### Socket Requests
-NONE
-### Socket Request
 NONE
 
 ## Phase 1 (Game 1)
@@ -67,10 +62,18 @@ NONE
 - submit_answer
 - get_nation_status
 
-## Phase 2 (Game 2)
+## Phase 2 (Game 2) (Team game)
 ### HTTP Request
+### Local In memory state
+- lobby: HashMap<string, socketId[]>
+- positions: HashMap<userId, { x, y }>
 ### DB Collections
+- lobby_progression
 ### Socket Request
+- play
+- send_input
+- player_position_update
+- player_disconnected
 
 ## Phase 3 (Game 3)
 ### HTTP Request
