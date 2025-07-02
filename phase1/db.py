@@ -1,5 +1,4 @@
-from app.db import client
+from app.db import db
 
-db = client["phase1"]
 nations = db["nations"]
 acitivity_logs = db["activity_logs"]

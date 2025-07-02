@@ -37,7 +37,7 @@ Here is the structural backdown of what's where
 - /auth
 - /logout
 ### DB Collections
-- Team
+- Team (Team game data)
 - User
 - SocketId (For socket_id <--> user_id relation for an active connection)
 - Sessions (For tokens and shit)
@@ -46,10 +46,9 @@ NONE
 
 ## Phase 0 (Joining)
 ### HTTP Request
-- /register (User registeration)
-- /team_create (Team registeration)
-- /join_team
+- /register (Team registration, with all player info)
 ### DB Collection
+- team_registration (just team data)
 ### Socket Requests
 NONE
 
@@ -65,13 +64,15 @@ NONE
 ## Phase 2 (Game 2) (Team game)
 ### HTTP Request
 ### Local In memory state
-- lobby: HashMap<string, socketId[]>
+- lobby: HashMap<teamId, socketId[]>
 - positions: HashMap<userId, { x, y }>
 ### DB Collections
 - lobby_progression
 ### Socket Request
 - play
 - send_input
+- level_complete (hide the sprite until next level)
+- level_start (next level caller)
 - player_position_update
 - player_disconnected
 
