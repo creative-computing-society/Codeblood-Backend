@@ -1,8 +1,8 @@
 
 import json
 from socketio import AsyncServer
-from app.socketio.socket_map import save_socket, remove_socket, get_all_sockets
-from app.db.mongo import nations_col, teams_col
+from .socket_map import save_socket, remove_socket, get_all_sockets
+from ..db.mongo import nations_col, teams_col
 from datetime import datetime
 
 # Load answers once at startup
@@ -40,39 +40,38 @@ def register_handlers(sio: AsyncServer):
             await sio.emit("answer_response", {"status": "already_captured"}, to=sid)
             return
 
-        if submitted_answer.strip().lower() == correct_answer.lower():
-            # Update nations collection
-            nations_col.update_one(
-                {"_id": nation_id},
-                {"$set": {
-                    "captured": True,
-                    "captured_by": team_name,
-                    "timestamp": datetime.utcnow()
-                }},
-                upsert=True
-            )
-
-            # Update team points
-            teams_col.update_one(
-                {"_id": team_name},
-                {"$inc": {"points": 100}},
-                upsert=True
-            )
-
-            # Broadcast capture to all sockets
-            await sio.emit("nation_captured", {
-                "nation_id": nation_id,
-                "captured_by": team_name
-            })
-
-            await sio.emit("answer_response", {"status": "correct"}, to=sid)
-
-        else:
+        if not submitted_answer.strip().lower() == correct_answer.lower():
             await sio.emit("answer_response", {"status": "incorrect"}, to=sid)
+            return
+        # Update nations collection
+        nations_col.update_one(
+            {"_id": nation_id},
+            {"$set": {
+                "captured": True,
+                "captured_by": team_name,
+                "timestamp": datetime.utcnow()
+            }},
+            upsert=True
+        )
+
+        # Update team points
+        teams_col.update_one(
+            {"_id": team_name},
+            {"$inc": {"points": 100}},
+            upsert=True
+        )
+
+        # Broadcast capture to all sockets
+        await sio.emit("nation_captured", {
+            "nation_id": nation_id,
+            "captured_by": team_name
+        })
+
+        await sio.emit("answer_response", {"status": "correct"}, to=sid)
 
     @sio.event
     async def get_nation_status(sid):
-        nations = nations_col.find({})
+        nations = await nations_col.find({})
         captured_list = [{
             "nation_id": n["_id"],
             "captured": n.get("captured", False),

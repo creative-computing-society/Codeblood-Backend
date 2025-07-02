@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Request
-from starlette.responses import RedirectResponse
+from fastapi import APIRouter
+from starlette.responses import JSONResponse
 from authlib.integrations.starlette_client import OAuth
-from app.db.mongo import users_col
-from app.auth.session import generate_session_token
 import os
+
+from config import IS_DEV
+from ..db.mongo import users_col
+from ..auth.session import generate_session_token
 from fastapi import Header, Request
-from app.db.mongo import sessions_col, sockets_col
-from app.socketio.socket_map import remove_socket
+from ..db.mongo import sessions_col, sockets_col
+from ..socketio.socket_map import remove_socket
 
 
 router = APIRouter()
@@ -26,6 +28,11 @@ async def login(request: Request):
     redirect_uri = request.url_for('auth')  # this will be the callback
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
+def validate_email(email: str):
+    if IS_DEV:
+        return email.endswith("@thapar.edu") or email.endswith("@gmail.com")
+    return email.endswith("@thapar.edu")
+
 @router.get("/auth")
 async def auth(request: Request):
     token = await oauth.google.authorize_access_token(request)
@@ -35,7 +42,7 @@ async def auth(request: Request):
         return {"error": "Failed to fetch user info"}
 
     email = user_info["email"]
-    if not (email.endswith("@thapar.edu") or email.endswith("@gmail.com")):
+    if not validate_email(email):
         return {"error": "Only thapar.edu or gmail.com domains are allowed"}
 
     # Save user if new
@@ -51,23 +58,23 @@ async def auth(request: Request):
     # Generate session token
     session_token = generate_session_token(str(user_id))
 
-    return RedirectResponse(f"http://localhost:3000/oauth?session_id={session_token}")
+    return JSONResponse({ "redirect_link": f"oauth?session_id={session_token}" })
 
 @router.post("/logout")
 async def logout(request: Request, session_id: str = Header(..., alias="X-Session-ID")):
     deleted = sessions_col.delete_one({"_id": session_id})
     
-    if deleted.deleted_count == 1:
-        # Get the socket.io server instance
-        sio = request.app.state.sio
-
-        # Find all sockets linked to this session
-        sockets = sockets_col.find({"session_id": session_id})
-        for s in sockets:
-            socket_id = s["_id"]
-            await sio.disconnect(socket_id)
-            remove_socket(socket_id)
-
-        return {"status": "logged_out"}
-    else:
+    if deleted.deleted_count != 1:
         return {"status": "session_not_found"}
+
+    # Get the socket.io server instance
+    sio = request.app.state.sio
+
+    # Find all sockets linked to this session
+    sockets = sockets_col.find({"session_id": session_id})
+    for s in sockets:
+        socket_id = s["_id"]
+        await sio.disconnect(socket_id)
+        remove_socket(socket_id)
+
+    return {"status": "logged_out"}

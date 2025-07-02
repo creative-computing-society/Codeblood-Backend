@@ -7,10 +7,12 @@ load_dotenv()
 MONGO_URI = getenv("MONGO_URI", "mongodb://localhost:27017")
 client = MongoClient(MONGO_URI)
 
-db = client["phase1_event"]
-
-users_col = db["users"]
+db = client["data"]
 sessions_col = db["sessions"]
-teams_col = db["teams"]
-nations_col = db["nations"]
+users_col = db["users"]
 sockets_col = db["socket_ids"]
+teams_col = db["teams"]
+
+phase1_db = client["phase1_event"]
+
+nations_col = db["nations"]
