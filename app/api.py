@@ -16,11 +16,12 @@ async def register_team(team: Team):
     stored_team=await teams_collection.insert_one(team.model_dump)
 
 
-    team_id= str(stored_team.inserted_id)
+    team_id= stored_team.inserted_id
+
     mails=[player.player_mail for player in team.players]
 
     # Add participant emails to the database
     for mail in mails:
-        await mail_collection.insert_one({"team_id": team_id, "EMail": mail})
+        await mail_collection.insert_one({"team_id": team_id, "email": mail})
 
     return f"{team.team_name} has been registered successfully."

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
+from bson import ObjectId
 
 
 class Player(BaseModel):
@@ -37,5 +38,5 @@ class Team(BaseModel):
 # This schema is used to store the email of participants along with their team id which is Mongo's _id field.
 class ParticipantMails(BaseModel):
 
-    team_id: str
-    EMail: str
+    team_id: ObjectId
+    email: str
