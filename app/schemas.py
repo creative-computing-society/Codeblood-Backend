@@ -25,12 +25,17 @@ class Team(BaseModel):
     team_id: int
     players: list[Player]
     player_count: int
-    passed_phase1: bool
-    passed_phase2: bool
-    passed_phase3: bool
 
     @field_validator('player_count')
     def validate_player_count(cls, player_count, player_list):
         if 'players' in player_list and len(player_list['players']) != player_count:
             raise ValueError('Player count must match the number of players provided')
         return player_count
+    
+
+
+# This schema is used to store the email of participants along with their team id which is Mongo's _id field.
+class ParticipantMails(BaseModel):
+
+    team_id: str
+    EMail: str

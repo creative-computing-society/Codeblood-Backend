@@ -6,3 +6,4 @@ client= MongoClient(MONGO_DETAILS)
 teams_db = client["team_database"]
 
 teams_collection: Collection = teams_db["teams"]
+mail_collection: Collection = teams_db["participant_mails"]

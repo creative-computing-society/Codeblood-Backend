@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from schemas import Team
-from mongo import teams_collection
+from mongo import teams_collection, mail_collection
 
 app = FastAPI()
 
@@ -11,9 +11,16 @@ async def register_team(team: Team):
     if existing_team:
         raise HTTPException(status_code=400, detail="Team with this name already exists")
 
-    team.team_id = await teams_collection.count_documents({}) + 1
-
+    
     #Add team to the database
-    await teams_collection.insert_one(team.model_dump)
+    stored_team=await teams_collection.insert_one(team.model_dump)
+
+
+    team_id= str(stored_team.inserted_id)
+    mails=[player.player_mail for player in team.players]
+
+    # Add participant emails to the database
+    for mail in mails:
+        await mail_collection.insert_one({"team_id": team_id, "EMail": mail})
 
     return f"{team.team_name} has been registered successfully."
