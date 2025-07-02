@@ -5,7 +5,7 @@ from fastapi import APIRouter, Header, Request
 from starlette.responses import JSONResponse
 from authlib.integrations.starlette_client import OAuth
 
-from config import IS_DEV
+from config import get_is_dev
 from .db_interface import (
     generate_session_token,
     delete_session,
@@ -28,7 +28,7 @@ oauth.register(
 
 
 def validate_email(email: str):
-    if IS_DEV:
+    if get_is_dev():
         return email.endswith("@thapar.edu") or email.endswith("@gmail.com")
     return email.endswith("@thapar.edu")
 

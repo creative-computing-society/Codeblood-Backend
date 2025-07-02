@@ -1,6 +1,20 @@
-IS_DEV = True
+_config = {
+    "is_dev": False,
+    "phase": "Phase 0"
+}
 
-phase = "Phase 1"
+def set_config(is_dev, phase):
+    global _config
+    _config["is_dev"] = is_dev
+    _config["phase"] = phase
+
+def get_is_dev():
+    global _config
+    return _config["is_dev"]
+
+def get_phase():
+    global _config
+    return _config["phase"]
 
 DIFFICULTY_TO_POINTS = {
     "easy": 10,
