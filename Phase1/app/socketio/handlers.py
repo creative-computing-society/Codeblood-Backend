@@ -1,4 +1,3 @@
-
 import json
 from socketio import AsyncServer
 from app.socketio.socket_map import save_socket, remove_socket, get_all_sockets
@@ -30,6 +29,10 @@ def register_handlers(sio: AsyncServer):
         submitted_answer = data.get("answer")
         team_name = data.get("team_name")
 
+        if not nation_id or not submitted_answer or not team_name:
+            await sio.emit("answer_response", {"status": "invalid_data"}, to=sid)
+            return
+
         correct_answer = ANSWERS.get(nation_id)
         if not correct_answer:
             await sio.emit("answer_response", {"status": "invalid_nation"}, to=sid)
@@ -40,8 +43,19 @@ def register_handlers(sio: AsyncServer):
             await sio.emit("answer_response", {"status": "already_captured"}, to=sid)
             return
 
+        team_doc = teams_col.find_one({"_id": team_name}) or {"powerups": [], "points": 0, "attempts": []}
+
+        # Get current attempt count for this nation
+        attempts_list = team_doc.get("attempts", [])
+        nation_attempt = next((a for a in attempts_list if a["nation_id"] == nation_id), None)
+
+        if nation_attempt and nation_attempt["attempt"] >= 3:
+            await sio.emit("nation_locked", {"nation_id": nation_id}, to=sid)
+            return
+
+        # Answer logic
         if submitted_answer.strip().lower() == correct_answer.lower():
-            # Update nations collection
+            # Mark as captured
             nations_col.update_one(
                 {"_id": nation_id},
                 {"$set": {
@@ -52,22 +66,38 @@ def register_handlers(sio: AsyncServer):
                 upsert=True
             )
 
-            # Update team points
+            # Give points
             teams_col.update_one(
                 {"_id": team_name},
                 {"$inc": {"points": 100}},
                 upsert=True
             )
 
-            # Broadcast capture to all sockets
             await sio.emit("nation_captured", {
                 "nation_id": nation_id,
                 "captured_by": team_name
             })
-
             await sio.emit("answer_response", {"status": "correct"}, to=sid)
 
         else:
+            # Update attempts
+            updated = False
+            for attempt in attempts_list:
+                if attempt["nation_id"] == nation_id:
+                    attempt["attempt"] += 1
+                    updated = True
+                    if attempt["attempt"] >= 3:
+                        await sio.emit("nation_locked", {"nation_id": nation_id}, to=sid)
+                    break
+            if not updated:
+                attempts_list.append({"nation_id": nation_id, "attempt": 1})
+
+            teams_col.update_one(
+                {"_id": team_name},
+                {"$set": {"attempts": attempts_list}},
+                upsert=True
+            )
+
             await sio.emit("answer_response", {"status": "incorrect"}, to=sid)
 
     @sio.event
