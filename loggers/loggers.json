@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "disable_existing_loggers": true,
+  "filters": {
+    "info_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 20
+    },
+    "debug_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 10
+    },
+    "warning_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 30
+    },
+    "error_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 40
+    },
+    "critical_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 50
+    }
+  },
+  "formatters": {
+    "info_fmt": {
+      "format": "\u001b[38;2;162;103;223m%(levelname)s\u001b[0m:     \u001b[37m%(message)s\u001b[0m"
+    },
+    "debug_fmt": {
+      "format": "\u001b[38;2;162;103;223m%(levelname)s\u001b[0m:     \u001b[4m%(message)s\u001b[0m"
+    },
+    "warning_fmt": {
+      "format": "\u001b[38;2;0;0;139m\u001b[1m%(levelname)s\u001b[0m:    \u001b[1m%(message)s\u001b[0m"
+    },
+    "error_fmt": {
+      "format": "\u001b[38;2;255;0;0m%(levelname)s\u001b[0m:  (%(filename)s):    \u001b[38;2;255;255;255m\u001b[1m%(message)s\u001b[0m"
+    },
+    "critical_fmt": {
+      "format": "\u001b[38;2;139;0;0m\u001b[1m%(levelname)s\u001b[0m:  (%(filename)s):     \u001b[38;2;255;0;0m%(message)s\u001b[0m"
+    }
+  },
+  "handlers": {
+    "info_console": {
+      "class": "logging.StreamHandler",
+      "level": "INFO",
+      "formatter": "info_fmt",
+      "filters": [
+        "info_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "debug_console": {
+      "class": "logging.StreamHandler",
+      "level": "DEBUG",
+      "formatter": "debug_fmt",
+      "filters": [
+        "debug_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "warning_console": {
+      "class": "logging.StreamHandler",
+      "level": "WARNING",
+      "formatter": "warning_fmt",
+      "filters": [
+        "warning_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "error_console": {
+      "class": "logging.StreamHandler",
+      "level": "ERROR",
+      "formatter": "error_fmt",
+      "filters": [
+        "error_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "critical_console": {
+      "class": "logging.StreamHandler",
+      "level": "CRITICAL",
+      "formatter": "critical_fmt",
+      "filters": [
+        "critical_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "file_handler": {
+      "class": "logging.FileHandler",
+      "level": "ERROR",
+      "formatter": "error_fmt",
+      "filters": [
+        "error_only",
+        "critical_only"
+      ],
+      "filename": "app.log",
+      "mode": "a",
+      "encoding": "utf-8"
+    }
+  },
+  "loggers": {
+    "pymongo": {
+      "level": "WARNING",
+      "propagate": false
+    },
+    "socketio": {
+      "level": "INFO",
+      "propagate": false
+    },
+    "asyncio": {
+      "level": "WARNING",
+      "propagate": false
+    }
+  },
+  "root": {
+    "propagate": false,
+    "level": "DEBUG",
+    "handlers": [
+      "info_console",
+      "debug_console",
+      "warning_console",
+      "error_console",
+      "critical_console",
+      "file_handler"
+    ]
+  }
+}
