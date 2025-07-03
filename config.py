@@ -1,20 +1,21 @@
-_config = {
-    "is_dev": False,
-    "phase": "Phase 0"
-}
+_config = {"is_dev": True, "phase": "Phase 0"}
+
 
 def set_config(is_dev, phase):
     global _config
     _config["is_dev"] = is_dev
     _config["phase"] = phase
 
+
 def get_is_dev():
     global _config
     return _config["is_dev"]
 
+
 def get_phase():
     global _config
     return _config["phase"]
+
 
 DIFFICULTY_TO_POINTS = {
     "easy": 10,
@@ -29,4 +30,3 @@ PHASE_TO_BUNDLES = {
     "Phase 3": ["App", "Phase 3"],
     "Phase 4": ["Phase 4"],
 }
-

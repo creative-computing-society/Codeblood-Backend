@@ -36,6 +36,7 @@ def validate_email(email: str):
 @router.get("/login")
 async def login(request: Request):
     redirect_uri = request.url_for("auth")  # this will be the callback
+    print(redirect_uri)
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
