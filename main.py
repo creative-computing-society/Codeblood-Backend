@@ -34,8 +34,9 @@ logger = getLogger(__name__)
 
 async def threads_cleanup():
     while True:
-        logger.info("Running thread cleanup")
-        clean_up()
+        clean_up_num = clean_up()
+        if clean_up_num != 0:
+            logger.info(f"Cleaned up {clean_up_num} async database operatons")
         await asyncio.sleep(1 * MINUTE)
 
 
