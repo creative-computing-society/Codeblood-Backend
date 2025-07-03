@@ -8,7 +8,7 @@ def generate_session_token(user_id: str) -> str:
     
     sessions_col.insert_one({
         "_id": session_id,
-        "user_id": "hehe",
+        "user_id": user_id,
         "created_at": datetime.utcnow(),
         "expires_at": datetime.utcnow() + timedelta(hours=24)
     })
