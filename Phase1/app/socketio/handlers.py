@@ -13,8 +13,14 @@ def register_handlers(sio: AsyncServer):
     @sio.event
     async def connect(sid, environ, auth):
         session_id = auth.get("session_id")
+        print("ARI SE BADHA CHUTIYA DOESNT EXIST")
         if not session_id:
             return False  
+        print("HARI SE BADHA CHUTIYA DOESNT EXIST1")
+        sid = str(sid)
+        print("HARI SE BADHA CHUTIYA DOESNT EXIST2")
+        session_id = str(session_id)
+        print("HARI SE BADHA CHUTIYA DOESNT EXIST3")
         save_socket(session_id, sid)
         print(f"[+] WebSocket connected: {sid} <- session: {session_id}")
 
