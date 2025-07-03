@@ -6,6 +6,10 @@ from app.auth.session import validate_session
 
 class SessionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        public_routes = ["/login", "/auth", "/test"]
+        if request.url.path in public_routes:
+            return await call_next(request)
+
         session_id = request.headers.get("X-Session-ID")
         if session_id:
             user_id = validate_session(session_id)
