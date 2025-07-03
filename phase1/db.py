@@ -1,4 +1,4 @@
-from app.db import db
+from db import get_db
 
-nations = db["nations"]
-acitivity_logs = db["activity_logs"]
+nations = get_db()["nations"]
+acitivity_logs = get_db()["activity_logs"]

@@ -6,7 +6,6 @@ from app.db_interface import save_socket, remove_socket
 
 logger = getLogger(__name__)
 
-
 class WebSocketHandler:
     def __init__(
         self,
@@ -21,15 +20,19 @@ class WebSocketHandler:
     async def connect(
         sid: str, environ: Dict[str, Any], auth: Optional[Dict[str, Any]]
     ) -> Optional[bool]:
-        session_id = auth.get("session_id") if auth else None
+        logger.debug("Socket - Connect")
+        print("Socket - Connect")
+        session_id = auth.get("token") if auth else None
         if not session_id:
             return False
 
         save_socket(session_id, sid)
-        logger.info(f"[+] WebSocket connected: {sid} <- session: {session_id}")
-        return None
+        logger.debug(f"[+] WebSocket connected: {sid} <- session: {session_id}")
+        return True
 
     @staticmethod
     async def disconnect(sid: str) -> None:
+        logger.debug("Socket - Disconect")
+        print("Socket - Disconect")
         remove_socket(sid)
-        logger.info(f"[-] WebSocket disconnected: {sid}")
+        logger.debug(f"[-] WebSocket disconnected: {sid}")

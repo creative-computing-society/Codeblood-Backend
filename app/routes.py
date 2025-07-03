@@ -35,6 +35,8 @@ def validate_email(email: str):
 
 @router.get("/login")
 async def login(request: Request):
+    logger.debug("HTTP - Login")
+    print("HTTP - Login")
     redirect_uri = request.url_for("auth")  # this will be the callback
     print(redirect_uri)
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -42,6 +44,8 @@ async def login(request: Request):
 
 @router.get("/auth")
 async def auth(request: Request):
+    logger.debug("HTTP - Auth")
+    print("HTTP - Auth")
     token = await oauth.google.authorize_access_token(request)
     user_info = token.get("userinfo")
 
@@ -60,11 +64,14 @@ async def auth(request: Request):
 
 @router.post("/logout")
 async def logout(request: Request, session_id: str = Header(..., alias="X-Session-ID")):
+    logger.debug("HTTP - Logout")
+    print("HTTP - Logout")
     deleted = delete_session(session_id)
+
 
     if deleted.deleted_count != 1:
         return {"status": "session_not_found"}
 
     sio = request.app.state.sio
-    await remove_all_sockets(sio, session_id)
+    remove_all_sockets(sio, session_id)
     return {"status": "logged_out"}

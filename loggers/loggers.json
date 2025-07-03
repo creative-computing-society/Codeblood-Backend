@@ -52,14 +52,14 @@
       "formatter": "standard"
     },
     "console2": {
-      "level": "WARNING",
+      "level": "DEBUG",
       "class": "logging.StreamHandler",
       "formatter": "standard"
     },
     "file": {
-      "level": "INFO",
+      "level": "DEBUG",
       "class": "logging.FileHandler",
-      "filename": "utils/logs/logs.txt",
+      "filename": "logs.txt",
       "mode": "w",
       "formatter": "verbose"
     }

@@ -117,7 +117,10 @@ class WebSocketHandler:
             "captured_by": nation.get("captured_by"),
         }
 
-    async def get_nation_status(self, sid: str) -> None:
+    # The reason I added a blank argument is if the socket did send some info (which we don't need)
+    # python would crash complaining about too many arguments passed in, because fucking python
+    # so the _ is the data that was sent but fuck that
+    async def get_nation_status(self, sid: str, _) -> None:
         nations = get_all_nations()
         process_tasks = [self._process_nation(nation) for nation in nations]
 

@@ -1,10 +1,6 @@
-from pymongo import MongoClient
-from os import getenv
+from db import get_db
 
-MONGO_URI = getenv("MONGO_URI", "mongodb://localhost:27017")
-client = MongoClient(MONGO_URI)
-
-db = client.get_database("data")
+db = get_db()["data"]
 token_sessions = db["sessions"]
 users = db["users"]
 socket_connections = db["socket_ids"]
