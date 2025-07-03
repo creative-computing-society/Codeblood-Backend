@@ -1,100 +1,128 @@
 {
   "version": 1,
-  "disabled_existing_loggers": false,
-  "formatters": {
-    "verbose": {
-      "()": "colorlog.ColoredFormatter",
-      "format": "%(log_color)s%(levelname)-10s%(reset)s - %(asctime)s - %(module)-15s : %(message_log_color)s%(message)s",
-      "datefmt": "%Y-%m-%d %H:%M:%S",
-      "log_colors": {
-        "DEBUG": "white",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "bold_red,bg_white"
-      },
-      "secondary_log_colors": {
-        "message": {
-          "INFO": "white",
-          "DEBUG": "white",
-          "WARNING": "white",
-          "ERROR": "white",
-          "CRITICAL": "white"
-        }
-      }
+  "disable_existing_loggers": true,
+  "filters": {
+    "info_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 20
     },
-    "standard": {
-      "()": "colorlog.ColoredFormatter",
-      "format": "%(log_color)s%(levelname)-10s%(reset)s - %(name)-15s : %(message_log_color)s%(message)s",
-      "datefmt": "%Y-%m-%d %H:%M:%S",
-      "log_colors": {
-        "DEBUG": "white",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "bold_red,bg_white"
-      },
-      "secondary_log_colors": {
-        "message": {
-          "INFO": "white",
-          "DEBUG": "white",
-          "WARNING": "white",
-          "ERROR": "white",
-          "CRITICAL": "white"
-        }
-      }
+    "debug_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 10
+    },
+    "warning_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 30
+    },
+    "error_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 40
+    },
+    "critical_only": {
+      "()": "loggers.loggers.LevelFilter",
+      "level": 50
+    }
+  },
+  "formatters": {
+    "info_fmt": {
+      "format": "\u001b[38;2;162;103;223m%(levelname)s\u001b[0m:     \u001b[37m%(message)s\u001b[0m"
+    },
+    "debug_fmt": {
+      "format": "\u001b[38;2;162;103;223m%(levelname)s\u001b[0m:     \u001b[4m%(message)s\u001b[0m"
+    },
+    "warning_fmt": {
+      "format": "\u001b[38;2;0;0;139m\u001b[1m%(levelname)s\u001b[0m:    \u001b[1m%(message)s\u001b[0m"
+    },
+    "error_fmt": {
+      "format": "\u001b[38;2;255;0;0m%(levelname)s\u001b[0m:  (%(filename)s):    \u001b[38;2;255;255;255m\u001b[1m%(message)s\u001b[0m"
+    },
+    "critical_fmt": {
+      "format": "\u001b[38;2;139;0;0m\u001b[1m%(levelname)s\u001b[0m:  (%(filename)s):     \u001b[38;2;255;0;0m%(message)s\u001b[0m"
     }
   },
   "handlers": {
-    "console": {
-      "level": "DEBUG",
+    "info_console": {
       "class": "logging.StreamHandler",
-      "formatter": "standard"
+      "level": "INFO",
+      "formatter": "info_fmt",
+      "filters": [
+        "info_only"
+      ],
+      "stream": "ext://sys.stdout"
     },
-    "console2": {
-      "level": "DEBUG",
+    "debug_console": {
       "class": "logging.StreamHandler",
-      "formatter": "standard"
-    },
-    "file": {
       "level": "DEBUG",
+      "formatter": "debug_fmt",
+      "filters": [
+        "debug_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "warning_console": {
+      "class": "logging.StreamHandler",
+      "level": "WARNING",
+      "formatter": "warning_fmt",
+      "filters": [
+        "warning_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "error_console": {
+      "class": "logging.StreamHandler",
+      "level": "ERROR",
+      "formatter": "error_fmt",
+      "filters": [
+        "error_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "critical_console": {
+      "class": "logging.StreamHandler",
+      "level": "CRITICAL",
+      "formatter": "critical_fmt",
+      "filters": [
+        "critical_only"
+      ],
+      "stream": "ext://sys.stdout"
+    },
+    "file_handler": {
       "class": "logging.FileHandler",
-      "filename": "logs.txt",
-      "mode": "w",
-      "formatter": "verbose"
+      "level": "ERROR",
+      "formatter": "error_fmt",
+      "filters": [
+        "error_only",
+        "critical_only"
+      ],
+      "filename": "app.log",
+      "mode": "a",
+      "encoding": "utf-8"
     }
   },
   "loggers": {
-    "phase1": {
-      "handlers": [
-        "console",
-        "console2"
-      ],
+    "pymongo": {
+      "level": "WARNING",
+      "propagate": false
+    },
+    "socketio": {
       "level": "INFO",
       "propagate": false
     },
-    "phase2": {
-      "handlers": [
-        "console",
-        "console2"
-      ],
-      "level": "INFO",
-      "propagate": false
-    },
-    "phase3": {
-      "handlers": [
-        "console",
-        "console2"
-      ],
-      "level": "INFO",
-      "propagate": false
-    },
-    "error": {
-      "handlers": [
-        "file"
-      ],
+    "asyncio": {
       "level": "WARNING",
       "propagate": false
     }
+  },
+  "root": {
+    "propagate": false,
+    "level": "DEBUG",
+    "handlers": [
+      "info_console",
+      "debug_console",
+      "warning_console",
+      "error_console",
+      "critical_console",
+      "file_handler"
+    ]
   }
 }

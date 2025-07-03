@@ -1,6 +1,7 @@
+from loggers.loggers import setup_logging
+
 import asyncio
 from contextlib import asynccontextmanager
-
 import uvicorn
 import argparse
 from dotenv import load_dotenv
@@ -9,9 +10,14 @@ from fastapi import FastAPI
 from socketio import AsyncServer, ASGIApp
 from logging import getLogger
 from threader import clean_up
-from config import PHASE_TO_BUNDLES, set_config
 
+setup_logging()
+
+# IMPORTS ARE IN THIS ORDER FOR A REASON
+# DO NOT CHANGE THE ORDER OF THE IMPORTS OR YOU WILL MEET THE CODING GODS
+from config import PHASE_TO_BUNDLES, set_config
 from db import init_db
+
 init_db()
 
 from app import bundle as appBundle
@@ -22,11 +28,16 @@ load_dotenv()
 Bundles = {"App": appBundle, "Phase 1": phase1Bundle}
 
 MINUTE = 60
+
+logger = getLogger(__name__)
+
+
 async def threads_cleanup():
     while True:
-        print("Running thread cleanup")
+        logger.info("Running thread cleanup")
         clean_up()
         await asyncio.sleep(1 * MINUTE)
+
 
 @asynccontextmanager
 async def boot(_app):
@@ -36,8 +47,6 @@ async def boot(_app):
 
 sio = AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI(lifespan=boot)
-
-logger = getLogger(__name__)
 
 
 @fastapi_app.get("/test")
@@ -85,9 +94,9 @@ bundles = PHASE_TO_BUNDLES[args.phase]
 for bundle in bundles:
     try:
         load_bundle(Bundles[bundle])
-        logger.warning(f"Loaded bundle: {bundle}")
+        logger.info(f"Loaded bundle: {bundle}")
     except:
-        logger.error(f"Failed to load bundle: {bundle}")
+        logger.info(f"Failed to load bundle: {bundle}")
 
 app = ASGIApp(sio, other_asgi_app=fastapi_app)
 
