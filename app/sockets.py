@@ -26,10 +26,10 @@ class WebSocketHandler:
             return False
 
         save_socket(session_id, sid)
-        print(f"[+] WebSocket connected: {sid} <- session: {session_id}")
+        logger.info(f"[+] WebSocket connected: {sid} <- session: {session_id}")
         return None
 
     @staticmethod
     async def disconnect(sid: str) -> None:
         remove_socket(sid)
-        print(f"[-] WebSocket disconnected: {sid}")
+        logger.info(f"[-] WebSocket disconnected: {sid}")
