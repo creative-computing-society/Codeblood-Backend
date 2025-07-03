@@ -12,17 +12,26 @@ def register_handlers(sio: AsyncServer):
 
     @sio.event
     async def connect(sid, environ, auth):
-        session_id = auth.get("session_id")
-        print("ARI SE BADHA CHUTIYA DOESNT EXIST")
+        # Backup: check auth dict if passed
+        session_id = None
+        if auth and isinstance(auth, dict):
+            session_id = auth.get("session_id")
+
+        # Sometimes auth isn't parsed correctly — fallback to query string
         if not session_id:
-            return False  
-        print("HARI SE BADHA CHUTIYA DOESNT EXIST1")
-        sid = str(sid)
-        print("HARI SE BADHA CHUTIYA DOESNT EXIST2")
+            qs = environ.get("QUERY_STRING", "")
+            from urllib.parse import parse_qs
+            parsed = parse_qs(qs)
+            session_id = parsed.get("session_id", [None])[0]
+
+        if not session_id:
+            print("❌ Connection rejected: No session_id found")
+            return False
+
         session_id = str(session_id)
-        print("HARI SE BADHA CHUTIYA DOESNT EXIST3")
+        sid = str(sid)
         save_socket(session_id, sid)
-        print(f"[+] WebSocket connected: {sid} <- session: {session_id}")
+        print(f"✅ WebSocket connected: {sid} <- session: {session_id}")
 
     @sio.event
     async def disconnect(sid):
