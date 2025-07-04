@@ -1,7 +1,6 @@
 from app.db.mongo import sockets_col
 
 def save_socket(session_id: str, socket_id: str):
-    print("HARI SE BADHA CHUTIYA DOESNT EXIST")
     sockets_col.update_one(
         {"_id": socket_id},
         {"$set": {"session_id": session_id}},

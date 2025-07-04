@@ -1,10 +1,102 @@
 [
-    {
-      "nation_id": "nation_001",
-      "answer": "pyramids"
-    },
-    {
-      "nation_id": "nation_002",
-      "answer": "mountfuji"
-    }
-  ]
+  {
+    "nation_id": "267503315b6a4e9fbae0fb1e72f5a69a",
+    "answer": "CTF{st4rs_4nd_str1p3s}"
+  },
+  {
+    "nation_id": "e710b4252c494fab92dc559f1809b51a",
+    "answer": "CTF{gr34t_w4ll_byp4ss}"
+  },
+  {
+    "nation_id": "b52a9b9b6f764ba1adfad6e74c8206d6",
+    "answer": "CTF{s4kur4_s3cr3ts}"
+  },
+  {
+    "nation_id": "5f23564849614786a1e7c3d203260016",
+    "answer": "CTF{3n1gm4_r3b0rn}"
+  },
+  {
+    "nation_id": "77f885548c2d4e12a79ffeb3fc9cbf85",
+    "answer": "CTF{b0llyw00d_buff3r}"
+  },
+  {
+    "nation_id": "d81dca47ed804a63aa5a351eec39ae0c",
+    "answer": "CTF{t34_t1m3_1nj3ct}"
+  },
+  {
+    "nation_id": "b1a22fd8bb8e41d6a13ee2e8f452b361",
+    "answer": "CTF{31ff3l_3nc0d3r}"
+  },
+  {
+    "nation_id": "1a2786c7c1dc4a13a64c0a20cbb1c66c",
+    "answer": "CTF{p4st4_pr0t0c0l}"
+  },
+  {
+    "nation_id": "9f4f33b542f54a6cb34b11800b6e2b0e",
+    "answer": "CTF{c4rn1v4l_ch40s}"
+  },
+  {
+    "nation_id": "62aa13f6b4a948aab0d1f9df2a70e280",
+    "answer": "CTF{m4pl3_l34f_m3m}"
+  },
+  {
+    "nation_id": "802dc1b558194af5a40fa63c4481ce60",
+    "answer": "CTF{kr3ml1n_k3yl0gg3r}"
+  },
+  {
+    "nation_id": "c23b20c1a8794f878f6b09914ea7ee96",
+    "answer": "CTF{k_p0p_cry3t0}"
+  },
+  {
+    "nation_id": "4d0ef3cd336e4f7ba3690b0dd1eab34e",
+    "answer": "CTF{fl4m3nc0_f1l3s}"
+  },
+  {
+    "nation_id": "94f2eb7f3d1f4cb48e39b7aa34ff56fc",
+    "answer": "CTF{0utb4ck_0v3rfl0w}"
+  },
+  {
+    "nation_id": "e0e7b21566394a82b4ee20911e61adab",
+    "answer": "CTF{t3qu1l4_sql}"
+  },
+  {
+    "nation_id": "f29a4f89cb0f4ff99d7ff9610988b165",
+    "answer": "CTF{b4l1_b1n4ry}"
+  },
+  {
+    "nation_id": "5148db7d6a234fdfba33f9fe2f5cb2bb",
+    "answer": "CTF{w1ndm1ll_w0rm}"
+  },
+  {
+    "nation_id": "b7ad3024b1064c5e884be2067ea8c978",
+    "answer": "CTF{d3s3rt_dd0s}"
+  },
+  {
+    "nation_id": "00c37fc369e5434c88934cdbe42a625c",
+    "answer": "CTF{1st4nbul_1ntr}"
+  },
+  {
+    "nation_id": "9b20e3b40f394cceab32dc5305c515d0",
+    "answer": "CTF{4lp1n3_cry3t0}"
+  },
+  {
+    "nation_id": "316184b4fcd84acb9d3a931e48cba9ff",
+    "answer": "CTF{t4ng0_tr0j4n}"
+  },
+  {
+    "nation_id": "8942c0a67ffb4c42a8f8c0f2f151fb59",
+    "answer": "CTF{d14m0nd_m1n3}"
+  },
+  {
+    "nation_id": "9b6f302a2ec54d2a94412e40cbf83bba",
+    "answer": "CTF{n0llyw00d_n3t}"
+  },
+  {
+    "nation_id": "6e1b47b57b2543b6b61b86e90538c2cb",
+    "answer": "CTF{pyr4m1d_pr0t0c0l}"
+  },
+  {
+    "nation_id": "6a849964f02d4092bd9897265c647d66",
+    "answer": "CTF{lu4nd4_l0g1c}"
+  }
+]
