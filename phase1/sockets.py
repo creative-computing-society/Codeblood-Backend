@@ -9,7 +9,7 @@ from mock_data import mockChallenges
 from .db_interface import get_nation_via_id, capture_nation, get_all_nations, attempted_too_many_times, \
     mark_incorrect_attempt, mark_correct_attempt
 
-from config import DIFFICULTY_TO_POINTS, get_is_mocks
+from config import DIFFICULTY_TO_POINTS, get_is_mocks, get_is_dev
 from app.db_interface import assign_team_points, get_socket_session
 
 ANSWER_JSON_FILE = path.join(path.dirname(__file__), "assets", "answers.json")
@@ -42,6 +42,10 @@ class WebSocketHandler:
 
         self.sio.on("submit_answer", self.submit_answer)
         self.sio.on("get_nation_status", self.get_nation_status)
+
+        # These functions are only to bypass checks for testing
+        if get_is_dev():
+            self.sio.on("broadcast_capture", self.broadcast_capture)
 
     async def submit_answer(self, sid: str, data: Dict[str, Any]) -> None:
         session = get_socket_session(sid)
@@ -122,3 +126,17 @@ class WebSocketHandler:
 
         await self.sio.emit("nation_status", captured_list, to=sid)
         return None
+
+    async def broadcast_capture(self, sid: str, data):
+        try:
+            data = json.loads(data)
+        except:
+            await self.sio.emit("error", {"status": "wtf yuo doin? send me json"}, to=sid)
+            return
+        if "nation_id" not in data or "team_name" not in data:
+            await self.sio.emit("reply", {"status": "nation_id & team_name needed"}, to=sid)
+            return
+        print("emitting")
+        await self.sio.emit(
+            "activity-update", {"nation_id": data["nation_id"], "captured_by": data["team_name"]}
+        )

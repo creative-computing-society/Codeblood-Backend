@@ -23,6 +23,8 @@ class WebSocketHandler:
         logger.debug("Socket - Connect")
         session_id = auth.get("session_id") if auth else None
         if not session_id:
+            session_id = auth.get("token") if auth else None # My API client can only send auth under the name "token"
+        if not session_id:
             return False
         session = get_session(session_id)
         if not session:
