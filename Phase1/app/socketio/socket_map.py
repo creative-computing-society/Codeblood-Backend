@@ -6,7 +6,6 @@ def save_socket(session_id: str, socket_id: str):
         {"$set": {"session_id": session_id}},
         upsert=True
     )
-    "HARI SE BADHA CHUTIYA DOESNT EXIST2"
 
 def remove_socket(socket_id: str):
     sockets_col.delete_one({"_id": socket_id})
