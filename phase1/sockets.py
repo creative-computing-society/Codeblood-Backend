@@ -10,8 +10,7 @@ from .db_interface import get_nation_via_id, capture_nation, get_all_nations, at
     mark_incorrect_attempt, mark_correct_attempt
 
 from config import DIFFICULTY_TO_POINTS, get_is_mocks
-from app.db_interface import assign_team_points
-
+from app.db_interface import assign_team_points, get_socket_session
 
 ANSWER_JSON_FILE = path.join(path.dirname(__file__), "assets", "answers.json")
 logger = getLogger("phase1")
@@ -44,33 +43,19 @@ class WebSocketHandler:
         self.sio.on("submit_answer", self.submit_answer)
         self.sio.on("get_nation_status", self.get_nation_status)
 
-    async def _validate_answer(
-        self, nation_id: str, submitted_answer: str, team_name: str
-    ):
-        result = True
-        if nation_id == "":
-            await self.sio.emit("error", {"detail": "Nation ID is None!"})
-            result = False
-
-        if submitted_answer == "":
-            await self.sio.emit("error", {"detail": "Answer cannot be None!"})
-            result = False
-
-        if team_name == "":
-            await self.sio.emit("error", {"detail": "Haan haan, bina team name ke kaam karenge"})
-            result = False
-
-        return result
-
     async def submit_answer(self, sid: str, data: Dict[str, Any]) -> None:
-        nation_id: str = data.get("nation_id", "")
-        submitted_answer: str = data.get("answer", "")
-        team_name: str = data.get("team_name", "")
-
-        if not await self._validate_answer(nation_id, submitted_answer, team_name):
+        session = get_socket_session(sid)
+        if not session or not session["team_name"]:
+            await self.sio.emit("error", {"detail": "User not in a team to represent"})
             return
 
-        if attempted_too_many_times(team_name, nation_id):
+        if "nation_id" not in data or "answer" not in data:
+            await self.sio.emit("error", {"detail": "nation_id & answer are the required fields"})
+            return
+        nation_id: str = data["nation_id"]
+        submitted_answer: str = data["answer"]
+
+        if attempted_too_many_times(session["team_name"], nation_id):
             await self.sio.emit("nation_locked", {"nation_id": nation_id}, to=sid)
             return
 
@@ -102,18 +87,18 @@ class WebSocketHandler:
             return
 
         if submitted_answer.strip().lower() != correct_answer.lower():
-            mark_incorrect_attempt(team_name, nation_id)
+            mark_incorrect_attempt(session["team_name"], nation_id)
             await self.sio.emit("answer_response", {"status": "incorrect"}, to=sid)
             return
 
-        mark_correct_attempt(team_name, nation_id)
-        capture_nation(nation_id, team_name)
+        mark_correct_attempt(session["team_name"], nation_id)
+        capture_nation(nation_id, session["team_name"])
         assign_team_points(
-            team_name, DIFFICULTY_TO_POINTS[nation.get("difficulty", "easy")]
+            session["team_name"], DIFFICULTY_TO_POINTS[nation.get("difficulty", "easy")]
         )
 
         await self.sio.emit(
-            "activity-update", {"nation_id": nation_id, "captured_by": team_name}
+            "activity-update", {"nation_id": nation_id, "captured_by": session["team_name"]}
         )
 
         await self.sio.emit("answer_response", {"status": "correct"}, to=sid)

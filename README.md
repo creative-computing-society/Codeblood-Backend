@@ -47,6 +47,7 @@ NONE
 ## Phase 0 (Joining)
 ### HTTP Request
 - /register (Team registration, with all player info)
+- /join-team
 ### DB Collection
 - team_registration (just team data)
 ### Socket Requests

@@ -2,6 +2,7 @@ from threader import send_thread
 from .db import users, socket_connections, token_sessions, teams
 from datetime import datetime, timedelta
 import uuid
+from bson import ObjectId
 
 NAMESPACE = uuid.UUID("5d8b4e77-52f7-4c84-a12f-1234567890ab")
 
@@ -22,20 +23,26 @@ def get_user_id_create_user_if_doesnt_exist(email: str, name: str) -> str:
     return existing_user["_id"]
 
 
+def get_socket_session(socket_id):
+    return socket_connections.find_one({"socket_id": socket_id})
+
+
 # Socket Connections
-def save_socket(session_id: str, socket_id: str):
+def save_socket(session_id: str, session_data: dict, socket_id: str):
     send_thread(
-        socket_connections.update_one,
-        (
-            {"_id": socket_id},
-            {"$set": {"session_id": session_id}},
-        ),
-        {"upsert": True},
+        socket_connections.insert_one,
+        ({
+            "socket_id": socket_id,
+            "session_id": session_id,
+            "user_id": session_data["user_id"],
+            "team_name": session_data.get("team_name", None),
+            "team_id": session_data.get("team_id", None),
+        },),
     )
 
 
 def remove_socket(socket_id: str):
-    send_thread(socket_connections.delete_one, ({"_id": socket_id},))
+    send_thread(socket_connections.delete_one, ({"socket_id": socket_id},))
 
 
 def remove_socket_unthreaded(socket_id: str):
@@ -72,7 +79,7 @@ def generate_session_token(user_id: str) -> str:
         token_sessions.insert_one,
         (
             {
-                "_id": session_id,
+                "_id": ObjectId(session_id),
                 "user_id": user_id,
                 "created_at": datetime.now(),
                 "expires_at": datetime.now() + timedelta(hours=24),
