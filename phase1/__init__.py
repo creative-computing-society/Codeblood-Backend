@@ -1,5 +1,7 @@
 from .sockets import WebSocketHandler
+from .routes import router
 
 bundle = {
-    "socket_handler": WebSocketHandler
+    "router": router,
+    "socket_handler": WebSocketHandler,
 }

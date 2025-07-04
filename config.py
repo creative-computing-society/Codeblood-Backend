@@ -1,15 +1,22 @@
-_config = {"is_dev": True, "phase": "Phase 0"}
+_config = {"is_dev": True, "is_mocks": True, "phase": "Phase 0"}
 
 
 def set_config(is_dev, phase):
     global _config
     _config["is_dev"] = is_dev
+    if not is_dev:
+        _config["is_mocks"] = False
     _config["phase"] = phase
 
 
 def get_is_dev():
     global _config
     return _config["is_dev"]
+
+
+def get_is_mocks():
+    global _config
+    return _config["is_mocks"]
 
 
 def get_phase():

@@ -102,4 +102,4 @@ for bundle in bundles:
 app = ASGIApp(sio, other_asgi_app=fastapi_app)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=args.dev)
+    uvicorn.run("main:app", host="127.0.0.1", port=3021, reload=args.dev)

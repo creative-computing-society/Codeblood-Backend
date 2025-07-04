@@ -54,6 +54,7 @@ NONE
 
 ## Phase 1 (Game 1)
 ### HTTP Request
+- /get-acitivity-logs
 ### DB Collections
 - Nation
 - Activity Log

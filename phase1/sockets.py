@@ -5,9 +5,11 @@ from typing import Any, Dict
 from socketio import AsyncServer
 from logging import getLogger
 
-from .db_interface import get_nation_via_id, capture_nation, get_all_nations
+from mock_data import mockChallenges
+from .db_interface import get_nation_via_id, capture_nation, get_all_nations, attempted_too_many_times, \
+    mark_incorrect_attempt, mark_correct_attempt
 
-from config import DIFFICULTY_TO_POINTS
+from config import DIFFICULTY_TO_POINTS, get_is_mocks
 from app.db_interface import assign_team_points
 
 
@@ -51,11 +53,11 @@ class WebSocketHandler:
             result = False
 
         if submitted_answer == "":
-            await self.sio.send({"detail": "Answer cannot be None!"})
+            await self.sio.emit("error", {"detail": "Answer cannot be None!"})
             result = False
 
         if team_name == "":
-            await self.sio.send({"detail": "Haan haan, bina team name ke kaam karenge"})
+            await self.sio.emit("error", {"detail": "Haan haan, bina team name ke kaam karenge"})
             result = False
 
         return result
@@ -67,6 +69,11 @@ class WebSocketHandler:
 
         if not await self._validate_answer(nation_id, submitted_answer, team_name):
             return
+
+        if attempted_too_many_times(team_name, nation_id):
+            await self.sio.emit("nation_locked", {"nation_id": nation_id}, to=sid)
+            return
+
 
         nation = self.ANSWERS.get(nation_id)
 
@@ -95,22 +102,24 @@ class WebSocketHandler:
             return
 
         if submitted_answer.strip().lower() != correct_answer.lower():
+            mark_incorrect_attempt(team_name, nation_id)
             await self.sio.emit("answer_response", {"status": "incorrect"}, to=sid)
             return
 
+        mark_correct_attempt(team_name, nation_id)
         capture_nation(nation_id, team_name)
         assign_team_points(
             team_name, DIFFICULTY_TO_POINTS[nation.get("difficulty", "easy")]
         )
 
         await self.sio.emit(
-            "nation_captured", {"nation_id": nation_id, "captured_by": team_name}
+            "activity-update", {"nation_id": nation_id, "captured_by": team_name}
         )
 
         await self.sio.emit("answer_response", {"status": "correct"}, to=sid)
 
     @staticmethod
-    async def _process_nation(nation: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_nation(nation: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "nation_id": nation["_id"],
             "captured": nation.get("captured", False),
@@ -121,8 +130,10 @@ class WebSocketHandler:
     # python would crash complaining about too many arguments passed in, because fucking python
     # so the _ is the data that was sent but fuck that
     async def get_nation_status(self, sid: str, _) -> None:
+        if get_is_mocks():
+            return mockChallenges
         nations = get_all_nations()
-        process_tasks = [self._process_nation(nation) for nation in nations]
+        captured_list = [self._process_nation(nation) for nation in nations]
 
-        captured_list = await gather(*process_tasks)
         await self.sio.emit("nation_status", captured_list, to=sid)
+        return None
