@@ -1,6 +1,7 @@
 import os
 from logging import getLogger
 
+from authlib.integrations.base_client import OAuthError
 from fastapi import APIRouter, Header, Request
 from starlette.responses import JSONResponse
 from authlib.integrations.starlette_client import OAuth
@@ -36,7 +37,6 @@ def validate_email(email: str):
 @router.get("/login")
 async def login(request: Request):
     logger.debug("HTTP - Login")
-    print("HTTP - Login")
     redirect_uri = request.url_for("auth")  # this will be the callback
     print(redirect_uri)
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -45,21 +45,21 @@ async def login(request: Request):
 @router.get("/auth")
 async def auth(request: Request):
     logger.debug("HTTP - Auth")
-    print("HTTP - Auth")
-    token = await oauth.google.authorize_access_token(request)
-    user_info = token.get("userinfo")
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = await oauth.google.parse_id_token(request, token)
+        if not user_info:
+            return {"error": "Failed to fetch user info"}
+        email = user_info["email"]
+        if not validate_email(email):
+            return {"error": "Only thapar.edu domains are allowed"}
 
-    if not user_info:
-        return {"error": "Failed to fetch user info"}
+        user_id = get_user_id_create_user_if_doesnt_exist(email, user_info["name"])
+        session_token = generate_session_token(str(user_id))
 
-    email = user_info["email"]
-    if not validate_email(email):
-        return {"error": "Only thapar.edu or gmail.com domains are allowed"}
-
-    user_id = get_user_id_create_user_if_doesnt_exist(email, user_info["name"])
-    session_token = generate_session_token(str(user_id))
-
-    return JSONResponse({"redirect_link": f"oauth?session_id={session_token}"})
+        return JSONResponse({"redirect_link": f"oauth?session_id={session_token}"})
+    except OAuthError as e:
+        return JSONResponse({"error": str(e)})
 
 
 @router.post("/logout")

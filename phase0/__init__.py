@@ -1,9 +1,7 @@
-from .routes import router
 from .sockets import WebSocketHandler
-from .middleware import SessionMiddleware
+from .routes import router
 
 bundle = {
     "router": router,
-    "middleware": SessionMiddleware,
     "socket_handler": WebSocketHandler,
 }

@@ -83,10 +83,10 @@ def generate_session_token(user_id: str) -> str:
     return session_id
 
 
-def validate_session(session_id: str) -> str | None:
+def get_session(session_id: str) -> str | None:
     session = token_sessions.find_one({"_id": session_id})
     if session and session["expires_at"] > datetime.now():
-        return session["user_id"]
+        return session
     return None
 
 

@@ -111,6 +111,10 @@
     "asyncio": {
       "level": "WARNING",
       "propagate": false
+    },
+    "uvicorn": {
+      "level": "DEBUG",
+      "propagate": true
     }
   },
   "root": {
