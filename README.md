@@ -42,26 +42,41 @@ Here is the structural backdown of what's where
 - SocketId (For socket_id <--> user_id relation for an active connection)
 - Sessions (For tokens and shit)
 ### Socket Request
-NONE
+- connect
+- disconnect
 
 ## Phase 0 (Joining)
 ### HTTP Request
 - /register (Team registration, with all player info)
 - /join-team
 ### DB Collection
-- team_registration (just team data)
+- team_code
 ### Socket Requests
 NONE
 
 ## Phase 1 (Game 1)
 ### HTTP Request
-- /get-acitivity-logs
+- /get-activity-logs
+- /get-self-team
 ### DB Collections
 - Nation
 - Activity Log
+- Attempts
 ### Socket Request
 - submit_answer
-- get_nation_status
+- get_question_status
+- accept-challenge
+- send-challenge
+- get-challengeable-teams
+- get-question
+### Socket Response
+- error
+- question_status
+- answer_response
+- question_locked (exhausted attempts)
+- activity-update
+- bonus-question (a bonus question is created, answer it to get extra points)
+- incoming-challenge
 
 ## Phase 2 (Game 2) (Team game)
 ### HTTP Request

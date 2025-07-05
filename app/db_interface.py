@@ -1,3 +1,5 @@
+from typing import List
+
 from threader import send_thread
 from .db import users, socket_connections, token_sessions, teams
 from datetime import datetime, timedelta
@@ -37,8 +39,18 @@ def save_socket(session_id: str, session_data: dict, socket_id: str):
             "user_id": session_data["user_id"],
             "team_name": session_data.get("team_name", None),
             "team_id": session_data.get("team_id", None),
+            "team_set": session_data.get("team_set", None),
         },),
     )
+
+
+def get_socket_connections_from_user_ids(user_ids: List[str]) -> List[str]:
+    return list(map(
+        lambda connection: connection["socket_id"],
+        socket_connections.find({
+            "user_id": {"$in": user_ids}
+        })
+    ))
 
 
 def remove_socket(socket_id: str):
@@ -46,7 +58,7 @@ def remove_socket(socket_id: str):
 
 
 def remove_socket_unthreaded(socket_id: str):
-    socket_connections.delete_one({"_id": socket_id})
+    socket_connections.delete_one({"socket_id": socket_id})
 
 
 async def remove_all_sockets_unthreaded(sio, session_id: str):
@@ -67,10 +79,6 @@ def remove_all_sockets(sio, session_id):
     )
 
 
-def get_all_sockets() -> list[str]:
-    return [doc["_id"] for doc in socket_connections.find({})]
-
-
 # Token sessions
 def generate_session_token(user_id: str) -> str:
     session_id = str(uuid.uuid5(NAMESPACE, user_id + str(datetime.now())))
@@ -79,7 +87,7 @@ def generate_session_token(user_id: str) -> str:
         token_sessions.insert_one,
         (
             {
-                "_id": ObjectId(session_id),
+                "session_id": session_id,
                 "user_id": user_id,
                 "created_at": datetime.now(),
                 "expires_at": datetime.now() + timedelta(hours=24),
@@ -90,15 +98,18 @@ def generate_session_token(user_id: str) -> str:
     return session_id
 
 
-def get_session(session_id: str) -> str | None:
-    session = token_sessions.find_one({"_id": session_id})
-    if session and session["expires_at"] > datetime.now():
-        return session
-    return None
+def get_session(session_id: str) -> dict | None:
+    session = token_sessions.find_one({"session_id": session_id})
+    if not session:
+        return None
+    if session["expires_at"] > datetime.now():
+        delete_session(session_id)
+        return None
+    return session
 
 
 def delete_session(session_id: str):
-    return token_sessions.delete_one({"_id": session_id})
+    return token_sessions.delete_one({"session_id": session_id})
 
 
 # Teams
@@ -108,3 +119,14 @@ def assign_team_points(team_name: str, points: int):
         ({"name": team_name}, {"$inc": {"points": points}}),
         {"upsert": True},
     )
+
+def get_teams_of_sets(sets: List[str]):
+    return teams.find({
+        "set": { "$in": sets }
+    })
+
+def get_member_ids(team_name: str) -> List[str]:
+    doc = teams.find_one({"name": team_name})
+    if doc is None:
+        return []
+    return doc["members"]

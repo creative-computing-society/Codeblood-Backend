@@ -1,4 +1,5 @@
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware as Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from .db_interface import get_session
@@ -10,9 +11,9 @@ middleware_exceptions = [
     ['auth']
 ]
 
-class SessionMiddleware(BaseHTTPMiddleware):
+class SessionMiddleware(Starlette):
     def __init__(self, app, *args, **kwargs):
-        super().__init__(app)
+        super().__init__(app, secret_key="nigga")
 
     async def dispatch(self, request: Request, call_next):
         path = str(request.url).split("/")[3:]

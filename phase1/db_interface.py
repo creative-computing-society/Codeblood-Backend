@@ -1,18 +1,18 @@
 from datetime import datetime
 
 from threader import send_thread
-from .db import nations, activity_logs, attempts
+from .db import questions, activity_logs, attempts
 
 
-# Nations
-def get_nation_via_id(nation_id: str):
-    return nations.find_one({"_id": nation_id})
+# Questions
+def get_question_via_id(question_id: str):
+    return questions.find_one({"question_id": question_id})
 
-def capture_nation(nation_id: str, capturer_team_name: str):
+def capture_question(question_id: str, capturer_team_name: str):
     send_thread(
-        nations.update_one,
+        questions.update_one,
         (
-            {"_id": nation_id},
+            {"question_id": question_id},
             {
                 "$set": {
                     "captured": True,
@@ -24,25 +24,35 @@ def capture_nation(nation_id: str, capturer_team_name: str):
         {"upsert": True}
     )
 
-def get_all_nations():
-    return nations.find({})
+
+def get_all_questions():
+    return questions.find({})
+
 
 def get_logs():
     return activity_logs.find({}).limit(10)
 
 
-def attempted_too_many_times(team_name: str, nation_id: str):
-    attempts_info = attempts.find_one({"team_name": team_name, "nation_id": nation_id})
+def insert_log(question_id: str, team_name: str):
+    activity_logs.insert_one({
+        "question_id": question_id,
+        "captured_by": team_name,
+        "timestamp": datetime.now(),
+    })
+
+
+def attempted_too_many_times(team_name: str, question_id: str):
+    attempts_info = attempts.find_one({"team_name": team_name, "question_id": question_id})
     if attempts_info is None:
         return True
     return attempts_info["attempts"] >= 3
 
-def mark_incorrect_attempt(team_name: str, nation_id: str):
+def mark_incorrect_attempt(team_name: str, question_id: str):
     # TODO CHECK: IF UPSERT ADDS team_name
     send_thread(
         attempts.update_one,
         (
-            {"team_name": team_name, "nation_id": nation_id},
+            {"team_name": team_name, "question_id": question_id},
             {
                 "$inc": {
                     "attempts": 1,
@@ -56,11 +66,11 @@ def mark_incorrect_attempt(team_name: str, nation_id: str):
     )
 
 
-def mark_correct_attempt(team_name: str, nation_id: str):
+def mark_correct_attempt(team_name: str, question_id: str):
     send_thread(
         attempts.update_one,
         (
-            {"team_name": team_name, "nation_id": nation_id},
+            {"team_name": team_name, "question_id": question_id},
             {
                 "$inc": {
                     "attempts": 1,

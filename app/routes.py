@@ -46,8 +46,10 @@ async def login(request: Request):
 async def auth(request: Request):
     logger.debug("HTTP - Auth")
     try:
+        # token = await oauth.google.authorize_access_token(request)
+        # user_info = await oauth.google.parse_id_token(request, token)
         token = await oauth.google.authorize_access_token(request)
-        user_info = await oauth.google.parse_id_token(request, token)
+        user_info = token.get("userinfo")
         if not user_info:
             return {"error": "Failed to fetch user info"}
         email = user_info["email"]

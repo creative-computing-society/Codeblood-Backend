@@ -8,6 +8,8 @@ logger = getLogger(__name__)
 @router.post("/register")
 async def register_team(request: Request):
     data = await request.json()
+    if "team_name" not in data:
+        return {"error": "Missing team_name"}
     team_name = data["team_name"]
     join_code = create_team_registration(team_name, request.state.session["user_id"])
     return {"code": join_code}
@@ -17,6 +19,8 @@ async def register_team(request: Request):
 async def join_team(request: Request):
     logger.debug("HTTP - Join Team")
     data = await request.json()
+    if "code" not in data:
+        return {"error": "Missing code"}
     join_code = data["code"]
     assign_team_to_user(request.state.session["user_id"], join_code)
     return {"status": "ok"}

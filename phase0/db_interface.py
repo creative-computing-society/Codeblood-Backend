@@ -50,27 +50,33 @@ def create_team_registration(team_name: str, creator_id: str):
     return join_code
 
 
+# fuck it, global variable
+current_set = 1
+
 def create_team_registration_unthreaded(team_name: str, creator_id: str, join_code: str):
+    global current_set
     team_id = teams.insert_one({
-        "team_name": team_name,
+        "name": team_name,
         "member_count": 1,
         "members": [creator_id],
+        "set": current_set,
     }).inserted_id
     team_codes.insert_one({"code": join_code, "id": team_id, "name": team_name})
     users.update_one(
         {"_id": creator_id},
         {"$set": {
             "team_id": team_id,
-            "team_name": team_name
+            "team_name": team_name,
+            "team_set": current_set,
         }}
     )
     token_sessions.update_one(
         {"user_id": creator_id},
         {"$set": {
             "team_id": team_id,
-            "team_name": team_name
+            "team_name": team_name,
+            "team_set": current_set,
         }}
         # No upserting, it just means the user didn't login
     )
-
-    return join_code
+    current_set += 1

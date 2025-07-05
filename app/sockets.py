@@ -27,6 +27,7 @@ class WebSocketHandler:
         if not session_id:
             return False
         session = get_session(session_id)
+        print(session)
         if not session:
             return False
 
