@@ -132,3 +132,12 @@ def get_member_ids(team_name: str) -> List[str]:
     if doc is None:
         return []
     return doc["members"]
+
+def get_team_points(team_id: str) -> int:
+    doc = teams.find_one({"_id": team_id})
+    if doc is None:
+        return 0
+    try:
+        return int(doc["points"])
+    except:
+        return 0

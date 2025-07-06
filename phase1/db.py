@@ -21,3 +21,12 @@ bonuses = get_db()["bonuses"]
 # team_name
 # bonus_question
 # extra_points
+# expires_at
+
+challenges = get_db()["challenges"]
+# challenger_team
+# accepter_team
+# expired_at
+# question_id
+# accept_code
+# accepted

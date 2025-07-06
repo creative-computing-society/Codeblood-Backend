@@ -63,7 +63,9 @@ NONE
 - Activity Log
 - Attempts
 ### Socket Request
+- get-team-points
 - submit_answer
+- submit_challenge_answer
 - get_question_status
 - accept-challenge
 - send-challenge

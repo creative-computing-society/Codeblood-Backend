@@ -7,15 +7,18 @@ from logging import getLogger
 from mock_data import mockActivity
 from .questions import questions, sets
 from .db_interface import get_question_via_id, capture_question, get_all_questions, attempted_too_many_times, \
-    mark_incorrect_attempt, mark_correct_attempt, insert_log, get_bonus
+    mark_incorrect_attempt, mark_correct_attempt, insert_log, get_bonus, create_challenge, accept_challenge, \
+    get_challenge, mark_incorrect_attempt_with_returned_attempts
 
 from config import DIFFICULTY_TO_POINTS, get_is_mocks, get_is_dev
 from app.db_interface import assign_team_points, get_socket_session, get_teams_of_sets, get_member_ids, \
-    get_socket_connections_from_user_ids
+    get_socket_connections_from_user_ids, get_team_points
 from .questions import sets_without_question
 
 ANSWER_JSON_FILE = path.join(path.dirname(__file__), "assets", "answers.json")
 logger = getLogger("phase1")
+
+CHALLENGE_POINTS = 100
 
 
 if not path.exists(ANSWER_JSON_FILE):
@@ -28,7 +31,9 @@ class WebSocketHandler:
         sio: AsyncServer,
     ):
         self.sio = sio
+        self.sio.on("get-team-points", self.get_self_team_points)
         self.sio.on("submit_answer", self.submit_answer)
+        self.sio.on("submit_challenge_answer", self.submit_challenge_answer)
         self.sio.on("get_question_status", self.get_question_status)
         self.sio.on("accept-challenge", self.accept_challenge)
         self.sio.on("send-challenge", self.send_challenge)
@@ -38,6 +43,13 @@ class WebSocketHandler:
         # These functions are only to bypass checks for testing
         if get_is_dev():
             self.sio.on("broadcast_capture", self.broadcast_capture)
+
+    async def get_self_team_points(self, sid, _):
+        session = get_socket_session(sid)
+        if not session or not session["team_name"]:
+            await self.sio.emit("error", {"detail": "User not in a team to represent"}, to=sid)
+            return None
+        return get_team_points(session["team_id"])
 
     async def submit_answer(self, sid: str, data: Dict[str, Any]) -> None:
         session = get_socket_session(sid)
@@ -110,6 +122,61 @@ class WebSocketHandler:
         )
         await self.sio.emit("answer_response", {"status": "correct"}, to=sid)
 
+    async def submit_challenge_answer(self, sid, data: Dict[str, Any]) -> None:
+        session = get_socket_session(sid)
+        if not session or not session["team_name"]:
+            await self.sio.emit("error", {"detail": "User not in a team to represent"}, to=sid)
+            return
+
+        if "accept_code" not in data or "answer" not in data:
+            await self.sio.emit("error", {"detail": "accept_code & answer are the required fields"}, to=sid)
+            return
+
+        challenge_doc = get_challenge(data["accept_code"])
+
+        if challenge_doc["accepter_team"] != session["team_name"]:
+            await self.sio.emit("error", {"detail": "mate you can't answer someone else's challenge"}, to=sid)
+            return
+
+        question_id = challenge_doc["question_id"]
+
+        if attempted_too_many_times(session["team_name"], question_id):
+            await self.sio.emit("question_locked", {"question_id": question_id}, to=sid)
+            return
+
+        question = list(filter(lambda x: x["id"] == question_id, questions))
+        if len(question) == 0:
+            await self.sio.emit("error", {"detail": "invalid_question"}, to=sid)
+            logger.error(
+                f"Missing or invalid question was passed! Question ID: {question_id}"
+            )
+            return
+
+        question = question[0]
+        correct_answer = question["answer"]
+
+        if data["answer"].strip().lower() == correct_answer.lower():
+            mark_correct_attempt(session["team_name"], question_id)
+            capture_question(question_id, session["team_name"])
+            assign_team_points(
+                session["team_name"],
+                DIFFICULTY_TO_POINTS[question.get("difficulty", "easy")] + CHALLENGE_POINTS # technically the NET is not zero, but i think this is fine
+            )
+            assign_team_points(challenge_doc["challenger_team"], -CHALLENGE_POINTS)
+            insert_log(question_id, session["team_name"])
+            await self.sio.emit(
+                "activity-update", {"question_id": question_id, "captured_by": session["team_name"]}
+            )
+            await self.sio.emit("answer_response", {"status": "correct"}, to=sid)
+            return
+
+        attempt_num = mark_incorrect_attempt_with_returned_attempts(session["team_name"], question_id)
+        if attempt_num == 3:
+            assign_team_points(session["team_name"], -CHALLENGE_POINTS)
+            assign_team_points(challenge_doc["challenger_team"], CHALLENGE_POINTS)
+
+        await self.sio.emit("answer_response", {"status": "incorrect"}, to=sid)
+
     @staticmethod
     def _process_question(question: Dict[str, Any]) -> Dict[str, Any]:
         return {
@@ -147,9 +214,13 @@ class WebSocketHandler:
         session = get_socket_session(sid)
         if not session or not session["team_name"]:
             await self.sio.emit("error", {"detail": "User not in a team to represent"}, to=sid)
-            return
-        #TODO
-        pass
+            return None
+        if "accept_code" not in data:
+            await self.sio.emit("error", {"detail": "Missing accept_code"}, to=sid)
+            return None
+
+        accept_challenge(session["team_name"], data["accept_code"])
+        return None
 
     async def send_challenge(self, sid: str, data):
         session = get_socket_session(sid)
@@ -161,16 +232,27 @@ class WebSocketHandler:
             return None
 
         target_team = data["target_team"]
+        target_question_id = data["target_question_id"]
+
+        question = list(filter(lambda x: x["id"] == target_question_id, questions))
+        if len(question) == 0:
+            await self.sio.emit("error", {"detail": "invalid_question"}, to=sid)
+            logger.error("Missing or invalid question was passed!")
+            return
+
+        accept_code = create_challenge(target_team, target_question_id)
         members = get_member_ids(target_team)
         socket_connections = get_socket_connections_from_user_ids(members)
 
         await self.sio.emit("incoming-challenge", {
-            "question_id": data["target_question_id"],
-            "challenger_name": target_team
+            "question_id": target_question_id,
+            "challenger_name": target_team,
+            "accept_code": accept_code,
         }, to=socket_connections)
         return {"info": "sent"}
 
     async def get_challengeable_teams(self, sid: str, question_id: str):
+        #TODO: if we get a different bonus question set, then only include teams that are actively connected
         session = get_socket_session(sid)
         if not session or not session["team_name"]:
             await self.sio.emit("error", {"detail": "User not in a team to represent"}, to=sid)
