@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from threader import send_thread
-from .db import questions, activity_logs, attempts
+from .db import questions, activity_logs, attempts, bonuses
 
 
 # Questions
@@ -43,8 +43,11 @@ def insert_log(question_id: str, team_name: str):
 
 def attempted_too_many_times(team_name: str, question_id: str):
     attempts_info = attempts.find_one({"team_name": team_name, "question_id": question_id})
+
+    # First time attempting
     if attempts_info is None:
-        return True
+        return False
+
     return attempts_info["attempts"] >= 3
 
 def mark_incorrect_attempt(team_name: str, question_id: str):
@@ -82,3 +85,21 @@ def mark_correct_attempt(team_name: str, question_id: str):
         ),
         {"upsert": True}
     )
+
+def create_bonus(team_name: str, question_id: str, extra_points: str):
+    assert extra_points != 0, "Extra points shouldn't be zero mate"
+    send_thread(
+        bonuses.insert_one,
+        {
+            "team_name": team_name,
+            "question_id": question_id,
+            "extra_points": extra_points,
+        }
+    )
+
+def get_bonus(team_name: str):
+    team_bonuses = bonuses.find_one({"team_name": team_name})
+    return list(map(
+        lambda bonus: { "question_id": bonus["question_id"], "extra_points": bonus["extra_points"] },
+        team_bonuses
+    ))

@@ -1,3 +1,5 @@
+from typing import Mapping
+
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from os import getenv
@@ -6,7 +8,7 @@ from logging import getLogger
 
 logger = getLogger(__name__)
 
-_db = None
+_db: MongoClient[Mapping[str, str]] = None
 
 load_dotenv()
 

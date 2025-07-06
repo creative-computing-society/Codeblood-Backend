@@ -1,14 +1,13 @@
 import json
-from asyncio import gather
 from os import path
 from typing import Any, Dict
 from socketio import AsyncServer
 from logging import getLogger
 
 from mock_data import mockActivity
-from questions import questions, sets
+from .questions import questions, sets
 from .db_interface import get_question_via_id, capture_question, get_all_questions, attempted_too_many_times, \
-    mark_incorrect_attempt, mark_correct_attempt, insert_log
+    mark_incorrect_attempt, mark_correct_attempt, insert_log, get_bonus
 
 from config import DIFFICULTY_TO_POINTS, get_is_mocks, get_is_dev
 from app.db_interface import assign_team_points, get_socket_session, get_teams_of_sets, get_member_ids, \
@@ -49,9 +48,22 @@ class WebSocketHandler:
         if "question_id" not in data or "answer" not in data:
             await self.sio.emit("error", {"detail": "question_id & answer are the required fields"}, to=sid)
             return
+
         question_id: str = data["question_id"]
         submitted_answer: str = data["answer"]
-        #TODO: handle the case where the user answers a question which they don't have access to
+        extra_points = 0
+
+        if question_id not in sets[session["team_set"]]:
+            team_bonuses = get_bonus(session["team_name"])
+            for bonus_question in team_bonuses:
+                if bonus_question["question_id"] != question_id:
+                    continue
+                extra_points = bonus_question["extra_points"]
+                break
+
+            if extra_points == 0:
+                await self.sio.emit("error", {"detail": "invalid question"}, to=sid)
+                return
 
         if attempted_too_many_times(session["team_name"], question_id):
             await self.sio.emit("question_locked", {"question_id": question_id}, to=sid)
@@ -59,7 +71,7 @@ class WebSocketHandler:
 
         question = list(filter(lambda x: x["id"] == question_id, questions))
         if len(question) == 0:
-            await self.sio.emit("answer_response", {"status": "invalid_question"}, to=sid)
+            await self.sio.emit("error", {"detail": "invalid_question"}, to=sid)
             logger.error(
                 f"Missing or invalid question was passed! Question ID: {question_id}"
             )
@@ -68,6 +80,8 @@ class WebSocketHandler:
         question = question[0]
         correct_answer = question["answer"]
 
+        #TODO: Talk about bonuses if another team solved the question (which wasn't bonus to them)
+        # Then should the team that got the bonus get screwed over?
         question_doc = get_question_via_id(question_id)
         if not question_doc:
             await self.sio.emit("answer_response", {"status": "invalid_question"}, to=sid)
@@ -88,7 +102,7 @@ class WebSocketHandler:
         capture_question(question_id, session["team_name"])
         assign_team_points(
             session["team_name"],
-            DIFFICULTY_TO_POINTS[question.get("difficulty", "easy")]
+            DIFFICULTY_TO_POINTS[question.get("difficulty", "easy")] + extra_points
         )
         insert_log(question_id, session["team_name"])
         await self.sio.emit(

@@ -16,3 +16,8 @@ attempts = get_db()["attempts"]
 # question_id
 # attempts
 # solved
+
+bonuses = get_db()["bonuses"]
+# team_name
+# bonus_question
+# extra_points
