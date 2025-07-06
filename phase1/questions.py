@@ -6,12 +6,22 @@ sets = {
     "3": ["15", "1", "20", "8", "16", "20", "7", "25", "3", "24"],
     "4": ["23", "25", "17", "4", "7", "6", "23", "19", "14", "20"],
 }
+all_questions = []
+for questions_set in sets:
+    all_questions.extend(questions_set)
 
 def sets_without_question(question_id: str) -> List[str]:
     return list(filter(
         lambda question_set: question_id not in question_set,
         sets
     ))
+
+def questions_not_in_set(question_set: List[str]) -> List[str]:
+    return list(filter(
+        lambda question: question not in question_set,
+        all_questions
+    ))
+
 
 class COUNTRIES:
     USA = "United States"

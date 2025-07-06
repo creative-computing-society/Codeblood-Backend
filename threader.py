@@ -18,6 +18,8 @@ def clean_up() -> int:
 def send_thread(target, args=None, kwargs=None):
     if args is None:
         args = ()
+    if type(args) != tuple:
+        args = (args,)
     if kwargs is None:
         kwargs = {}
 

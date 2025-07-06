@@ -1,3 +1,4 @@
+from random import choice
 from typing import List
 
 from threader import send_thread
@@ -33,14 +34,14 @@ def get_socket_session(socket_id):
 def save_socket(session_id: str, session_data: dict, socket_id: str):
     send_thread(
         socket_connections.insert_one,
-        ({
+        {
             "socket_id": socket_id,
             "session_id": session_id,
             "user_id": session_data["user_id"],
             "team_name": session_data.get("team_name", None),
             "team_id": session_data.get("team_id", None),
             "team_set": session_data.get("team_set", None),
-        },),
+        },
     )
 
 
@@ -54,7 +55,7 @@ def get_socket_connections_from_user_ids(user_ids: List[str]) -> List[str]:
 
 
 def remove_socket(socket_id: str):
-    send_thread(socket_connections.delete_one, ({"socket_id": socket_id},))
+    send_thread(socket_connections.delete_one, {"socket_id": socket_id})
 
 
 def remove_socket_unthreaded(socket_id: str):
@@ -85,14 +86,12 @@ def generate_session_token(user_id: str) -> str:
 
     send_thread(
         token_sessions.insert_one,
-        (
-            {
-                "session_id": session_id,
-                "user_id": user_id,
-                "created_at": datetime.now(),
-                "expires_at": datetime.now() + timedelta(hours=24),
-            },
-        ),
+        {
+            "session_id": session_id,
+            "user_id": user_id,
+            "created_at": datetime.now(),
+            "expires_at": datetime.now() + timedelta(hours=24),
+        },
     )
 
     return session_id
@@ -113,6 +112,9 @@ def delete_session(session_id: str):
 
 
 # Teams
+def get_random_team():
+    return choice(teams.find({}))
+
 def assign_team_points(team_name: str, points: int):
     send_thread(
         teams.update_one,

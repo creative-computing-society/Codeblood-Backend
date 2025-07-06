@@ -1,7 +1,10 @@
 from datetime import datetime
+from random import choice, randint
 
+from app.db_interface import get_random_team, get_socket_connections_from_user_ids
 from threader import send_thread
 from .db import questions, activity_logs, attempts, bonuses
+from .questions import questions_not_in_set
 
 
 # Questions
@@ -86,7 +89,7 @@ def mark_correct_attempt(team_name: str, question_id: str):
         {"upsert": True}
     )
 
-def create_bonus(team_name: str, question_id: str, extra_points: str):
+def create_bonus(team_name: str, question_id: str, extra_points: int):
     assert extra_points != 0, "Extra points shouldn't be zero mate"
     send_thread(
         bonuses.insert_one,
@@ -103,3 +106,35 @@ def get_bonus(team_name: str):
         lambda bonus: { "question_id": bonus["question_id"], "extra_points": bonus["extra_points"] },
         team_bonuses
     ))
+
+
+async def assign_random_bonus(sio):
+    team, members, socket_connections = None, None, None
+    i = 5 # 5 attempts
+    while i > 0:
+        team = get_random_team()
+        members = team["members"]
+        socket_connections = get_socket_connections_from_user_ids(members)
+        i -= 1
+        if len(socket_connections) != 0:
+            break
+
+    if len(socket_connections) == 0:
+        # fuck it
+        return None
+
+    question_id = choice(questions_not_in_set(team["set"]))
+    extra_points = randint(1, 50)
+    create_bonus(team["name"], question_id, extra_points)
+
+
+    await sio.emit("bonus-question", {
+        "question_id": question_id,
+        "extra_points": extra_points
+    }, to=socket_connections)
+    return {
+        "team_name": team["name"],
+        "question_id": question_id,
+        "extra_points": extra_points,
+        "active_connections": len(socket_connections)
+    }

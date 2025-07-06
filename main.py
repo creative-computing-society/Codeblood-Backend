@@ -9,6 +9,8 @@ from os import getenv
 from fastapi import FastAPI
 from socketio import AsyncServer, ASGIApp
 from logging import getLogger
+
+from phase1.db_interface import assign_random_bonus
 from threader import clean_up
 
 setup_logging()
@@ -36,17 +38,27 @@ async def threads_cleanup():
     while True:
         clean_up_num = clean_up()
         if clean_up_num != 0:
-            logger.info(f"Cleaned up {clean_up_num} async database operatons")
+            logger.info(f"Cleaned up {clean_up_num} async database operations")
         await asyncio.sleep(1 * MINUTE)
+
+async def bonus_loop():
+    global sio
+    while True:
+        info = await assign_random_bonus(sio)
+        logger.info(f"Given team {info['team_name']} question {info['question_id']} for {info['extra_points']} extra points, message broadcasted to {info['active_connections']}")
+        await asyncio.sleep(1 * MINUTE)
+
+
+sio = AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 
 
 @asynccontextmanager
 async def boot(_app):
     asyncio.create_task(threads_cleanup())
+    asyncio.create_task(bonus_loop())
     yield
 
 
-sio = AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 fastapi_app = FastAPI(lifespan=boot)
 
 

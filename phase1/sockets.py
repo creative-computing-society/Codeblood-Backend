@@ -148,6 +148,7 @@ class WebSocketHandler:
         if not session or not session["team_name"]:
             await self.sio.emit("error", {"detail": "User not in a team to represent"}, to=sid)
             return
+        #TODO
         pass
 
     async def send_challenge(self, sid: str, data):
