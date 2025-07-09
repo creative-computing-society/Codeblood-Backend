@@ -30,6 +30,10 @@
     "uvicorn": {
       "level": "DEBUG",
       "propagate": true
+    },
+    "starlette": {
+      "level": "WARNING",
+      "propagate": false
     }
   },
   "root": {

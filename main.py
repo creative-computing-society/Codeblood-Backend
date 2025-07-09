@@ -2,15 +2,23 @@ import uvicorn
 import loggers
 
 from fastapi import FastAPI
+from starlette.middleware.sessions import SessionMiddleware
 from socketio import AsyncServer, ASGIApp
 from contextlib import asynccontextmanager
 from logging import getLogger
+from dotenv import load_dotenv
+from os import getenv
 
 from oauth import oauth_router
 from registeration import registeration_routes
 from database import init_db, init_users, init_teams, init_lobbies
 
+load_dotenv()
+
 logger = getLogger(__name__)
+
+SECRET_KEY = getenv("SESSION_SECRET_KEY")
+assert SECRET_KEY is not None, "Session secret key not found!"
 
 
 @asynccontextmanager
@@ -31,6 +39,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(debug=True, lifespan=lifespan)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 app.include_router(oauth_router)
 app.include_router(registeration_routes)
 

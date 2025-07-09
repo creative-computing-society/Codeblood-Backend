@@ -13,7 +13,7 @@ def create_team_code(length=8):
 
 
 def generate_player_uuid(player_name: str):
-    return uuid5(UUID_NAMESPACE, player_name)
+    return str(uuid5(UUID_NAMESPACE, player_name))
 
 
 def generate_initial_team(
