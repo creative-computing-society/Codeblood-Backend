@@ -12,7 +12,6 @@ h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
 idna==3.10
-itsdangerous==2.2.0
 pycparser==2.22
 pydantic==2.11.7
 pydantic_core==2.33.2
@@ -27,3 +26,4 @@ typing-inspection==0.4.1
 typing_extensions==4.14.0
 uvicorn==0.35.0
 wsproto==1.2.0
+itsdangerous==2.2.0

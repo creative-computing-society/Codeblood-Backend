@@ -1,0 +1,16 @@
+{
+  "_comment": "This will store both teams and users",
+  "_collection_name": "teams",
+  "team_code": "HEX_CODE",
+  "team_name": "str",
+  "players": [
+    {
+      "player_id": "uuid5",
+      "name": "str",
+      "email": "@thapar.edu",
+      "is_hacker": true,
+      "is_wizard": false
+    }
+  ],
+  "team_leader_email": "@thapar.edu"
+}
