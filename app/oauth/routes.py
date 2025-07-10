@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, status, Header, HTTPException
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from starlette.responses import JSONResponse
-
+from starlette.responses import RedirectResponse
 from dotenv import load_dotenv
 from os import getenv
 from logging import getLogger
@@ -72,7 +72,7 @@ async def auth(request: Request):
     )
 
     # Return JWT to frontend (store in localStorage or cookie)
-    return JSONResponse(
+    return RedirectResponse(f"http://localhost:3000/oauth?session_id={session_token}") , JSONResponse(
         {"token": jwt_token, "email": email, "name": user["name"]},
         status_code=status.HTTP_200_OK,
     )
