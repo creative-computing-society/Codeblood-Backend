@@ -43,6 +43,6 @@ ENV IS_DEV=False
 ENV SECURE_LOGIN=True
 
 # Run the application
-CMD ["uvicorn", "main:app", "--host", "127.0.0.1", "--port", "3021"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3021"]
 
 #NOTE: 127.0.0.1 will work with the OAuth. 

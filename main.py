@@ -43,7 +43,7 @@ app = FastAPI(debug=True, lifespan=lifespan)
 # Add SessionMiddleware
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
-print(f"SECRET_KEY: {SECRET_KEY}")
+# print(f"SECRET_KEY: {SECRET_KEY}")
 
 @app.middleware("http")
 async def debug_middleware(request, call_next):
@@ -67,7 +67,7 @@ app.include_router(oauth_router)
 app.include_router(registeration_routes)
 # app.include_router(admin_routes
 
-@app.get("/")
+@app.get("/test")
 async def test():
     return {"message": "backend is up and running!"}
 
