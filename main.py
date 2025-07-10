@@ -22,16 +22,6 @@ logger = getLogger(__name__)
 SECRET_KEY = getenv("SESSION_SECRET_KEY")
 assert SECRET_KEY is not None, "Session secret key not found!"
 
-
-class DebugSessionMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        print("📦 Cookies:", request.cookies)
-        try:
-            print("🔐 Session:", request.session)
-        except AssertionError:
-            print("❌ SessionMiddleware not yet loaded!")
-        return await call_next(request)
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
@@ -47,17 +37,19 @@ async def lifespan(app: FastAPI):
 
     yield
 
-
 app = FastAPI(debug=True, lifespan=lifespan)
+# Add SessionMiddleware
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=SECRET_KEY,
-    same_site="lax",       # 🍪 allow cross-site cookies
-    https_only=SECURE_LOGIN       # ❗ set to True in production (HTTPS required for SameSite=None)
-)
-app.add_middleware(DebugSessionMiddleware)
+print(f"SECRET_KEY: {SECRET_KEY}")
 
+@app.middleware("http")
+async def debug_middleware(request, call_next):
+    # print(f"Request scope: {request.scope}")
+    response = await call_next(request)
+    return response
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:3000"],
@@ -65,12 +57,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+# Include routers
 app.include_router(oauth_router)
 app.include_router(registeration_routes)
-# app.include_router(admin_routes)
+# app.include_router(admin_routes
 
 sio = AsyncServer()
 
-
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=3021, reload=IS_DEV)
+

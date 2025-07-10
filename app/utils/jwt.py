@@ -30,10 +30,14 @@ def create_jwt(email: str, access_token: str):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-
-def verify_jwt(token: str) -> Dict[str, Any]:
+def verify_jwt(token: str):
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except Exception as e:
-        logger.error(f"Exception occured while verifying jwt {e}")
-        return {}
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        # print(f"Decoded JWT payload: {payload}")
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("JWT expired")
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        print("Invalid JWT")
+        raise HTTPException(status_code=401, detail="Invalid token")

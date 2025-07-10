@@ -77,7 +77,7 @@ async def auth(request: Request):
     # Set HTTP-only cookie and redirect
     #Biscuit nhi Cookie set krna hai
     # Cookie will be HTTP-only, secure, and have a max age of 7 days
-    response = RedirectResponse(url="http://localhost:3000/oauth")
+    response = RedirectResponse(url="http://127.0.0.1:3000/oauth")
     response.set_cookie(
         key="session_token",
         value=jwt_token,
@@ -114,3 +114,25 @@ async def logout(request: Request):
     response.delete_cookie(key="session_token", path="/")
 
     return response
+
+@router.get("/me")
+async def get_user_info(request: Request):
+    token = request.cookies.get("session_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not logged in")
+
+    try:
+        payload = verify_jwt(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    email = payload.get("sub")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not found in token")
+
+    users = request.app.state.users
+    user = await users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"name": user["name"], "email": user["email"]}
