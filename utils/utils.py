@@ -17,7 +17,7 @@ def generate_player_uuid(player_name: str):
 
 
 def generate_initial_team(
-    team_name: str, player_name: str, email: str, is_hacker: bool, is_wizard: bool
+    team_name: str, player_name: str, email: str
 ) -> Dict[str, Any]:
     team_code = create_team_code()
     player_id = generate_player_uuid(player_name)
@@ -29,8 +29,6 @@ def generate_initial_team(
                 "name": player_name,
                 "id": player_id,
                 "email": email,
-                "is_hacker": is_hacker,
-                "is_wizard": is_wizard,
             }
         ],
         "team_leader_email": email,
@@ -38,19 +36,22 @@ def generate_initial_team(
 
 
 def add_player(
-    team_code: str, player_name: str, email: str, is_hacker: bool, is_wizard: bool
+    team_code: str, player_name: str, email: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     player_id = generate_player_uuid(player_name)
 
-    # ChatGPT gave me this, idk whats going on
-    return {"team_code": team_code, "$expr": {"$lt": [{"$size": "$players"}, 4]}}, {
-        "$push": {
-            "players": {
-                "name": player_name,
-                "id": player_id,
-                "email": email,
-                "is_hacker": is_hacker,
-                "is_wizard": is_wizard,
+    return (
+        {
+            "team_code": team_code,
+            "$expr": {"$lt": [{"$size": "$players"}, 4]},
+        },  # This part is filtering for 4 players
+        {
+            "$push": {
+                "players": {
+                    "name": player_name,
+                    "id": player_id,
+                    "email": email,
+                }
             }
-        }
-    }
+        },  # This part adds the player into the database
+    )

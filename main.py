@@ -33,7 +33,6 @@ async def lifespan(app: FastAPI):
     app.state.users = users
     app.state.teams = teams
     app.state.lobbies = lobbies
-    app.state.teams = teams
 
     yield
 
