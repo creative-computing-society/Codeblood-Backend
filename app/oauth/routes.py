@@ -9,6 +9,7 @@ from os import getenv
 from logging import getLogger
 from config import SECURE_LOGIN
 
+
 from app.utils.jwt import create_jwt, verify_jwt
 
 load_dotenv()
@@ -44,6 +45,7 @@ oauth.register(
 async def login(request: Request):
     redirect_uri = request.url_for("auth")
     return await oauth.google.authorize_redirect(request, redirect_uri)
+
 
 
 @router.get("/auth")
