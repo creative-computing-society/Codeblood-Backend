@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse
 from dotenv import load_dotenv
 from os import getenv
 from logging import getLogger
-from config import SECURE_LOGIN
+
 
 
 from app.utils.jwt import create_jwt, verify_jwt
@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 
 GOOGLE_CLIENT_ID = getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = getenv("GOOGLE_CLIENT_SECRET")
-
+SECURE_LOGIN = getenv("SECURE_LOGIN")
 assert GOOGLE_CLIENT_ID is not None and GOOGLE_CLIENT_SECRET is not None, (
     "Client ID or Client Secret is None!"
 )

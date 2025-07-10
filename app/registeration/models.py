@@ -23,12 +23,8 @@ class Player(BaseModel):
     @classmethod
     def check_complementary_roles(cls, is_wizard, info):
         is_hacker = info.data.get("is_hacker")
-        is_wizard = info.data.get("is_wizard")
         if is_hacker is None:
             raise ValueError("is_hacker must be provided")
-
-        if is_wizard is None:
-            raise ValueError("is_wizard must be provided")
 
         if is_hacker == is_wizard:
             raise ValueError(
@@ -36,8 +32,8 @@ class Player(BaseModel):
             )
         return is_wizard
 
-    def __getitem__(self, key: str):
-        return getattr(self, key)
+        def __getitem__(self, key: str):
+            return getattr(self, key)
 
 
 class TeamDashboard(BaseModel):
