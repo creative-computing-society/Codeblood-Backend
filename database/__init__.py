@@ -38,7 +38,7 @@ async def init_teams():
     global teams
     assert database is not None, "Datavase not initialized properly!"
 
-    teams = database.get_collection("lobbies")
+    teams = database.get_collection("teams")
 
     # NOTE: Adding indexes is kinda addictive ngl
     await teams.create_index("team_name", unique=True)
