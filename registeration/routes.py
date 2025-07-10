@@ -72,15 +72,21 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
 
     team_code = data.team_code
 
-    existing = await teams.find_one(
-        {"team_code": team_code, "players.email": user["email"]}
-    )
+    existing = await teams.find_one({"team_code": team_code})
 
     if not existing:
         return JSONResponse(
             {"error": "Team code invalid or player already in team"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
+
+    # Check if player is already part of the team
+    for player in existing.get("players", []):
+        if player["email"] == user["email"]:
+            return JSONResponse(
+                {"error": "Player already in team"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
     update_info = add_player(team_code, data.username, user["email"])
     result = await teams.update_one(*update_info)
@@ -167,3 +173,5 @@ async def update_team_dashboard(
         await teams.update_one(
             {"team_code": team_code}, {"$set": {"players": existing["players"]}}
         )
+
+    return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
