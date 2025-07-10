@@ -1,7 +1,7 @@
 from fastapi import Header, HTTPException, Request
 from logging import getLogger
 
-from utils.jwt import verify_jwt
+from app.utils.jwt import verify_jwt
 
 logger = getLogger(__name__)
 

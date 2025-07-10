@@ -6,10 +6,10 @@ from logging import getLogger
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError
 
-from oauth import get_current_user
-from utils import generate_initial_team, add_player, add_teamid_to_user
+from app.oauth import get_current_user
+from app.utils import generate_initial_team, add_player, add_teamid_to_user
 
-from .models import RegisterTeam, JoinTeam, TeamDashboard
+from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard
 
 router = APIRouter()
 logger = getLogger(__name__)

@@ -11,7 +11,6 @@ LOCALHOST_MONGO = "mongodb://localhost:27017"
 MONGO_URI = getenv("MONGO_URI", LOCALHOST_MONGO)
 
 
-# Mainly made this to annoy Hari >:) (no hate on you Hari, I just like to annoy people :))
 class MongoManager:
     def __init__(self, client: AsyncIOMotorClient) -> None:
         self.client = client

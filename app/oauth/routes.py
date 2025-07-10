@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from os import getenv
 from logging import getLogger
 
-from utils.jwt import create_jwt
+from app.utils.jwt import create_jwt
 
 load_dotenv()
 

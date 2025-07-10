@@ -9,10 +9,10 @@ from logging import getLogger
 from dotenv import load_dotenv
 from os import getenv
 
-from oauth import oauth_router
-from registeration import registeration_routes
+from app.oauth import oauth_router
+from app.registeration import registeration_routes
 # from admin import admin_routes
-from database import init_db, init_users, init_teams, init_lobbies
+from app.database import init_db, init_users, init_teams, init_lobbies
 
 load_dotenv()
 
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     await init_teams()
     await init_lobbies()
 
-    from database import users, teams, lobbies
+    from app.database import users, teams, lobbies
 
     app.state.users = users
     app.state.teams = teams

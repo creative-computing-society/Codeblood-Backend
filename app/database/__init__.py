@@ -1,4 +1,4 @@
-from .database import MongoManager
+from app.database.database import MongoManager
 
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 from typing import Optional
