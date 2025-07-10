@@ -1,6 +1,6 @@
 {
   "_comment": "This will store only user's email, password, and access token",
-  "_collection_name": "apparently mongo has its own users collection",
+  "_collection_name": "users",
   "email(@thapar.edu)": {
     "name": "ye",
     "jwt_token": "jwt token of email + oauth access token"
