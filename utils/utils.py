@@ -2,7 +2,12 @@ from secrets import choice
 from string import ascii_letters, digits
 from uuid import uuid5, UUID
 from typing import Dict, Tuple, Any
+from bson import ObjectId
+from fastapi import Request
+from motor.motor_asyncio import AsyncIOMotorCollection
+from logging import getLogger
 
+logger = getLogger(__name__)
 
 UUID_NAMESPACE = UUID("5d8b4e77-52f7-4c84-a12f-1234567890ab")
 
@@ -55,3 +60,28 @@ def add_player(
             }
         },  # This part adds the player into the database
     )
+
+
+async def add_teamid_to_user(request: Request, team_code: str, email: str):
+    teams: AsyncIOMotorCollection = request.app.state.teams
+    users: AsyncIOMotorCollection = request.app.state.users
+
+    # Step 1: Find the team
+    team = await teams.find_one({"team_code": team_code})
+
+    assert team is not None, (
+        "We have a problem, i just inserted the team and it did not insert"
+    )
+
+    team_id = team["_id"]  # this is an ObjectId
+
+    # Step 2: Add this team_id to the user
+    result = await users.update_one(
+        {"email": email},  # Find user by email
+        {"$set": {"team_id": team_id}},  # Add or update team_id field
+    )
+
+    if result.modified_count == 0:
+        logger.warning(
+            f"User was unable to be added to team. Team Code: {team_code}, Email: {email}"
+        )

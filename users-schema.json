@@ -3,6 +3,7 @@
   "_collection_name": "users",
   "email(@thapar.edu)": {
     "name": "ye",
-    "jwt_token": "jwt token of email + oauth access token"
+    "jwt_token": "jwt token of email + oauth access token",
+    "team_id": "_id of the team user joined"
   }
 }

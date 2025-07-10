@@ -7,7 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError
 
 from oauth import get_current_user
-from utils import generate_initial_team, add_player
+from utils import generate_initial_team, add_player, add_teamid_to_user
 
 from .models import RegisterTeam, JoinTeam, TeamDashboard
 
@@ -20,6 +20,7 @@ async def register_team(
     request: Request, data: RegisterTeam, user=Depends(get_current_user)
 ):
     teams: AsyncIOMotorCollection = request.app.state.teams
+    users: AsyncIOMotorCollection = request.app.state.users
 
     team_name = data.team_name
     player_name = data.username
@@ -49,6 +50,10 @@ async def register_team(
 
     try:
         await teams.insert_one(team_info)
+
+        # Add _id of team to user as "team_id" tag
+        await add_teamid_to_user(request, team_info.get("team_code", ""), user["email"])
+
         return JSONResponse({"team_code": team_info.get("team_code")})
 
     except DuplicateKeyError:
@@ -90,6 +95,9 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
 
     update_info = add_player(team_code, data.username, user["email"])
     result = await teams.update_one(*update_info)
+
+    # Add _id of team to user as "team_id" tag
+    await add_teamid_to_user(request, team_code, user["email"])
 
     if result.modified_count == 0:
         return JSONResponse(

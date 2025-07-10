@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -35,6 +35,9 @@ class Player(BaseModel):
                 "Player must be either a hacker or a wizard, not both or neither"
             )
         return is_wizard
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
 
 
 class TeamDashboard(BaseModel):
