@@ -155,9 +155,9 @@ async def update_team_dashboard(
     hacker_count, wizard_count = 0, 0
 
     for player in players:
-        if player["is_hacker"]:
+        if player.is_hacker:
             hacker_count += 1
-        elif player["is_wizard"]:
+        elif player.is_wizard:
             wizard_count += 1
         else:
             return JSONResponse(
