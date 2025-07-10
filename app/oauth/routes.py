@@ -12,7 +12,7 @@ from app.utils.jwt import create_jwt
 
 load_dotenv()
 
-router = APIRouter(prefix="/auth")
+router = APIRouter()
 logger = getLogger(__name__)
 
 GOOGLE_CLIENT_ID = getenv("GOOGLE_CLIENT_ID")
