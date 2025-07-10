@@ -17,15 +17,15 @@ def create_team_code(length=8):
     return "".join(choice(chars) for _ in range(length))
 
 
-def generate_player_uuid(player_name: str):
-    return str(uuid5(UUID_NAMESPACE, player_name))
+def generate_player_uuid(email: str):
+    return str(uuid5(UUID_NAMESPACE, email))
 
 
 def generate_initial_team(
     team_name: str, player_name: str, email: str
 ) -> Dict[str, Any]:
     team_code = create_team_code()
-    player_id = generate_player_uuid(player_name)
+    player_id = generate_player_uuid(email)
     return {
         "team_name": team_name,
         "team_code": team_code,
