@@ -7,6 +7,7 @@ from starlette.responses import RedirectResponse
 from dotenv import load_dotenv
 from os import getenv
 from logging import getLogger
+from config import SECURE_LOGIN
 
 from app.utils.jwt import create_jwt, verify_jwt
 
@@ -71,11 +72,18 @@ async def auth(request: Request):
         upsert=True,
     )
 
-    # Return JWT to frontend (store in localStorage or cookie)
-    return RedirectResponse(f"http://localhost:3000/oauth?session_id={session_token}") , JSONResponse(
-        {"token": jwt_token, "email": email, "name": user["name"]},
-        status_code=status.HTTP_200_OK,
+    # Set HTTP-only cookie and redirect
+    response = RedirectResponse(url="http://localhost:3000/oauth")
+    response.set_cookie(
+        key="session_token",
+        value=jwt_token,
+        httponly=True,
+        secure=SECURE_LOGIN,  # Use SECURE_LOGIN from config 
+        samesite="lax",  
+        max_age=7 * 24 * 60 * 60,  
+        path="/"
     )
+    return response
 
 @router.post("/logout")
 async def logout(request: Request, authorization: str = Header(...)):
