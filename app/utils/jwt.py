@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from jose import jwt
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
