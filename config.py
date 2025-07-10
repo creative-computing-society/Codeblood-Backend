@@ -1,2 +1,0 @@
-IS_DEV=True
-SECURE_LOGIN=False

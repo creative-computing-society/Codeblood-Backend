@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from logging import getLogger
 from dotenv import load_dotenv
 from os import getenv
-from config import IS_DEV, SECURE_LOGIN
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.oauth import oauth_router
 from app.registeration import registeration_routes
@@ -20,6 +20,8 @@ load_dotenv()
 logger = getLogger(__name__)
 
 SECRET_KEY = getenv("SESSION_SECRET_KEY")
+IS_DEV = getenv("IS_DEV")
+SECURE_LOGIN = getenv("SECURE_LOGIN")
 assert SECRET_KEY is not None, "Session secret key not found!"
 
 @asynccontextmanager
