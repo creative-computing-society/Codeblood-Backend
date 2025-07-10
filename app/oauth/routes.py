@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Header, HTTPException
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from starlette.responses import JSONResponse
@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from os import getenv
 from logging import getLogger
 
-from app.utils.jwt import create_jwt
+from app.utils.jwt import create_jwt, verify_jwt
 
 load_dotenv()
 
@@ -76,3 +76,26 @@ async def auth(request: Request):
         {"token": jwt_token, "email": email, "name": user["name"]},
         status_code=status.HTTP_200_OK,
     )
+
+@router.post("/logout")
+async def logout(request: Request, authorization: str = Header(...)):
+    """
+    Logs the user out by removing their stored JWT from the DB.
+    Frontend must send JWT in Authorization header as 'Bearer <token>'
+    """
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Invalid Authorization header format")
+
+    token = authorization[7:]  # Remove "Bearer " prefix
+    payload = verify_jwt(token)
+
+    email = payload.get("email")
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    users = request.app.state.users
+
+    # Remove the stored JWT from the database
+    await users.update_one({"email": email}, {"$unset": {"jwt": ""}})
+
+    return JSONResponse({"message": "Logged out successfully"}, status_code=200)
