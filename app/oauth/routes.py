@@ -73,6 +73,8 @@ async def auth(request: Request):
     )
 
     # Set HTTP-only cookie and redirect
+    #Biscuit nhi Cookie set krna hai
+    # Cookie will be HTTP-only, secure, and have a max age of 7 days
     response = RedirectResponse(url="http://localhost:3000/oauth")
     response.set_cookie(
         key="session_token",
@@ -86,16 +88,15 @@ async def auth(request: Request):
     return response
 
 @router.post("/logout")
-async def logout(request: Request, authorization: str = Header(...)):
+async def logout(request: Request):
     """
-    Logs the user out by removing their stored JWT from the DB.
-    Frontend must send JWT in Authorization header as 'Bearer <token>'
+    Logs the user out by clearing the session cookie and removing the stored JWT from the DB.
     """
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=400, detail="Invalid Authorization header format")
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        raise HTTPException(status_code=400, detail="Session token not found")
 
-    token = authorization[7:]  # Remove "Bearer " prefix
-    payload = verify_jwt(token)
+    payload = verify_jwt(session_token)
 
     email = payload.get("email")
     if not email:
@@ -106,4 +107,8 @@ async def logout(request: Request, authorization: str = Header(...)):
     # Remove the stored JWT from the database
     await users.update_one({"email": email}, {"$unset": {"jwt": ""}})
 
-    return JSONResponse({"message": "Logged out successfully"}, status_code=200)
+    # Clear the session cookie
+    response = JSONResponse({"message": "Logged out successfully"}, status_code=200)
+    response.delete_cookie(key="session_token", path="/")
+
+    return response
