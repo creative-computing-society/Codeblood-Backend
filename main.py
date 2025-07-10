@@ -67,7 +67,10 @@ app.include_router(oauth_router)
 app.include_router(registeration_routes)
 # app.include_router(admin_routes
 
-sio = AsyncServer()
+@app.get("/")
+async def test():
+    return {"message": "backend is up and running!"}
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=3021, reload=IS_DEV)
