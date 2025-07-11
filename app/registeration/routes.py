@@ -160,6 +160,32 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
     return JSONResponse({"success": True})
 
 
+# @router.get("/team-dashboard")
+# async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user)):
+#     teams: AsyncIOMotorCollection = request.app.state.teams
+
+#     email = user["email"]
+
+#     existing: Optional[Dict[str, Any]] = await teams.find_one({"players.email": email})
+
+#     if not existing:
+#         return JSONResponse(
+#             {"error": "Player not part of team"},
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#         )
+
+#     # Forcing query to be of Dict[str, Any] cause PyRight got confused
+#     existing = cast(Dict[str, Any], existing)
+
+#     # We are assuming that the initial check in "/create-team" and "/join-team" will prevent the user being in 2 teams
+#     is_leader: bool = existing.get("team_leader_email") == email
+
+#     # Remove _id tag cause whats frontend gonna do with it?
+#     existing.pop("_id")
+#     existing.update({"is_leader": is_leader})
+
+#     return JSONResponse(existing)
+
 @router.get("/team-dashboard")
 async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user)):
     teams: AsyncIOMotorCollection = request.app.state.teams
@@ -184,8 +210,16 @@ async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user))
     existing.pop("_id")
     existing.update({"is_leader": is_leader})
 
-    return JSONResponse(existing)
+    # Check if `is_wizard` and `is_hacker` exist in the database
+    for player in existing.get("players", []):
+        if player["email"] == email:
+            if "is_wizard" in player:
+                existing.update({"is_wizard": player["is_wizard"]})
+            if "is_hacker" in player:
+                existing.update({"is_hacker": player["is_hacker"]})
+            break
 
+    return JSONResponse(existing)
 
 @router.post("/team-dashboard")
 async def update_team_dashboard(
