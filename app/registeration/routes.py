@@ -14,6 +14,22 @@ from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard
 router = APIRouter()
 logger = getLogger(__name__)
 
+@router.get("/verify")
+async def is_registered(request: Request, user=Depends(get_current_user)):
+    """
+    Checks if the user is registered in a team based on the session cookie.
+    """
+    teams: AsyncIOMotorCollection = request.app.state.teams
+
+    email = user["email"]
+
+    # Check if the user is part of a team
+    existing_team = await teams.find_one({"players.email": email})
+
+    if existing_team:
+        return {"registered": True}
+    else:
+        return {"registered": False}
 
 @router.post("/create-team")
 async def register_team(
@@ -24,6 +40,7 @@ async def register_team(
 
     team_name = data.team_name
     player_name = data.username
+    discord_id = data.discord_id  # Extract discord_id
 
     # Check to see if user is in any other team
     check_user_task = teams.find_one({"players.email": user["email"]})
@@ -46,7 +63,7 @@ async def register_team(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    team_info = generate_initial_team(team_name, player_name, user["email"])
+    team_info = generate_initial_team(team_name, player_name, user["email"], discord_id)
 
     try:
         await teams.insert_one(team_info)
@@ -70,12 +87,12 @@ async def register_team(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
 @router.post("/join-team")
 async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_user)):
     teams: AsyncIOMotorCollection = request.app.state.teams
 
     team_code = data.team_code
+    discord_id = data.discord_id  # Extract discord_id
 
     existing = await teams.find_one({"team_code": team_code})
 
@@ -93,7 +110,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-    update_info = add_player(team_code, data.username, user["email"])
+    update_info = add_player(team_code, data.username, user["email"], discord_id)
     result = await teams.update_one(*update_info)
 
     # Add _id of team to user as "team_id" tag

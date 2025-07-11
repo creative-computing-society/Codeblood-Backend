@@ -8,6 +8,7 @@
       "player_id": "uuid5",
       "name": "str",
       "email": "@thapar.edu",
+      "discord_id": "str",
       "is_hacker": true,
       "is_wizard": false
     }

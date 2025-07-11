@@ -5,12 +5,12 @@ from pydantic import BaseModel, EmailStr, field_validator
 class RegisterTeam(BaseModel):
     team_name: str
     username: str
-
+    discord_id: str  # Add this field
 
 class JoinTeam(BaseModel):
     team_code: str
     username: str
-
+    discord_id: str  # Add this field
 
 class Player(BaseModel):
     name: str
@@ -18,6 +18,7 @@ class Player(BaseModel):
     email: EmailStr
     is_hacker: bool
     is_wizard: bool
+    discord_id: str  # Add this field
 
     @field_validator("is_wizard")
     @classmethod
