@@ -9,21 +9,56 @@ from pymongo.errors import DuplicateKeyError
 from app.oauth import get_current_user
 from app.utils import generate_initial_team, add_player, add_teamid_to_user
 
+
+from app.utils.jwt import verify_jwt
+
 from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard
 
 router = APIRouter()
 logger = getLogger(__name__)
 
-@router.get("/verify")
-async def is_registered(request: Request, user=Depends(get_current_user)):
-    """
-    Checks if the user is registered in a team based on the session cookie.
-    """
-    teams: AsyncIOMotorCollection = request.app.state.teams
+# @router.get("/verify")
+# async def is_registered(request: Request, user=Depends(get_current_user)):
+#     """
+#     Checks if the user is registered in a team based on the session cookie.
+#     """
+#     teams: AsyncIOMotorCollection = request.app.state.teams
 
-    email = user["email"]
+#     email = user["email"]
 
     # Check if the user is part of a team
+    # existing_team = await teams.find_one({"players.email": email})
+
+#     if existing_team:
+#         return {"registered": True}
+#     else:
+#         return {"registered": False}
+
+@router.get("/verify")
+async def is_authenticated(request: Request):
+    """
+    Checks if the user has a valid session cookie and exists in the DB.
+    """
+    token = request.cookies.get("session_token")
+    if not token:
+        return {"registered": False}
+
+    payload = verify_jwt(token)
+    if not payload:
+        return {"registered": False}
+
+    email = payload.get("sub")
+    if not email:
+        return {"registered": False}
+
+    users = request.app.state.users
+    user = await users.find_one({"email": email})
+
+    if not user:
+        return {"registered": False}
+    
+    teams: AsyncIOMotorCollection = request.app.state.teams
+
     existing_team = await teams.find_one({"players.email": email})
 
     if existing_team:

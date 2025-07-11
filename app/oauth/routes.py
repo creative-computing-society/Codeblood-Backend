@@ -100,7 +100,9 @@ async def logout(request: Request):
 
     payload = verify_jwt(session_token)
 
-    email = payload.get("email")
+    email = payload.get("sub")
+    print("Decoded JWT payload:", payload)
+
     if not email:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
