@@ -221,6 +221,56 @@ async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user))
 
     return JSONResponse(existing)
 
+# @router.post("/team-dashboard")
+# async def update_team_dashboard(
+#     request: Request, data: TeamDashboard, user=Depends(get_current_user)
+# ):
+#     teams: AsyncIOMotorCollection = request.app.state.teams
+
+#     team_code = data.team_code
+#     players = data.players
+
+#     existing = await teams.find_one({"team_code": team_code})
+
+#     if not existing:
+#         return JSONResponse(
+#             {"error": "Frontend, why are you giving me a bad request"},
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#         )
+
+#     hacker_count, wizard_count = 0, 0
+
+#     for player in players:
+#         if player.is_hacker:
+#             hacker_count += 1
+#         elif player.is_wizard:
+#             wizard_count += 1
+#         else:
+#             return JSONResponse(
+#                 {"error": "Invalid wizard/hacker count"},
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#     if hacker_count > 2 or wizard_count > 2:
+#         return Response(
+#             "User is trying to have more than 2 wizard/hacker, now you have 4 wizards",
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#         )  # I love messing with users
+
+#     # At this point we have validated that hacker count is less than 2 and wizard count is less than 2, so we insert the query
+#     # But incase of some stupidity, we will have the update query in a try-except block to revert to previous state incase of an error
+
+#     try:
+#         await teams.update_one({"team_code": team_code}, {"$set": {"players": players}})
+#     except Exception as e:
+#         logger.error(f"HOUSTON, WE HAVE A PROBLEM: {e}")
+#         await teams.update_one(
+#             {"team_code": team_code}, {"$set": {"players": existing["players"]}}
+#         )
+
+#     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
+
+
 @router.post("/team-dashboard")
 async def update_team_dashboard(
     request: Request, data: TeamDashboard, user=Depends(get_current_user)
@@ -257,15 +307,19 @@ async def update_team_dashboard(
             status_code=status.HTTP_400_BAD_REQUEST,
         )  # I love messing with users
 
-    # At this point we have validated that hacker count is less than 2 and wizard count is less than 2, so we insert the query
-    # But incase of some stupidity, we will have the update query in a try-except block to revert to previous state incase of an error
+    # Convert Player objects to dictionaries
+    players_dict = [player.dict() for player in players]
 
     try:
-        await teams.update_one({"team_code": team_code}, {"$set": {"players": players}})
+        await teams.update_one({"team_code": team_code}, {"$set": {"players": players_dict}})
     except Exception as e:
         logger.error(f"HOUSTON, WE HAVE A PROBLEM: {e}")
         await teams.update_one(
             {"team_code": team_code}, {"$set": {"players": existing["players"]}}
+        )
+        return JSONResponse(
+            {"error": "Database update failed, reverted to previous state"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
