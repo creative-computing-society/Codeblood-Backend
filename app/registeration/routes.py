@@ -52,7 +52,7 @@ async def is_authenticated(request: Request):
     else:
         return {"registered": False}
     
-@router.get("/verufy")
+@router.get("/verify")
 @limiter.limit("20/minute")
 async def token_verify(request: Request):
     """
