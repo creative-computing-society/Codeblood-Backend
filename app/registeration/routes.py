@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 
 
 
-@router.get("/verify")
+@router.get("/checkRegistered")
 @limiter.limit("20/minute") 
 async def is_authenticated(request: Request):
     """
@@ -52,7 +52,7 @@ async def is_authenticated(request: Request):
     else:
         return {"registered": False}
     
-@router.get("/register")
+@router.get("/verufy")
 @limiter.limit("20/minute")
 async def token_verify(request: Request):
     """
