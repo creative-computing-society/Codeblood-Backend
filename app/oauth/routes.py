@@ -9,6 +9,7 @@ from os import getenv
 from logging import getLogger
 
 
+FRONTEND_URL = getenv("FRONTEND_URL", "http://127.0.0.1:3000")
 
 from app.utils.jwt import create_jwt, verify_jwt
 
@@ -77,7 +78,7 @@ async def auth(request: Request):
     # Set HTTP-only cookie and redirect
     #Biscuit nhi Cookie set krna hai
     # Cookie will be HTTP-only, secure, and have a max age of 7 days
-    response = RedirectResponse(url="http://127.0.0.1:3000/oauth")
+    response = RedirectResponse(url=f"{FRONTEND_URL}/oauth")
     response.set_cookie(
         key="session_token",
         value=jwt_token,
