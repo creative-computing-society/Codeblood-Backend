@@ -84,7 +84,8 @@ async def auth(request: Request):
         key="session_token",
         value=jwt_token,
         httponly=True,
-        secure=SECURE_LOGIN,  # Use SECURE_LOGIN from config 
+        secure=SECURE_LOGIN, 
+        domain=".ccstiet.com" # Use SECURE_LOGIN from config 
         samesite="lax",  
         max_age=7 * 24 * 60 * 60,  
         path="/"
