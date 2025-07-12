@@ -51,6 +51,33 @@ async def is_authenticated(request: Request):
         return {"registered": True}
     else:
         return {"registered": False}
+    
+@router.get("/register")
+@limiter.limit("20/minute")
+async def token_verify(request: Request):
+    """
+    Verifies the validity of the session token received in the cookie.
+    Returns a boolean indicating whether the token is valid or not.
+    """
+    token = request.cookies.get("session_token")
+    if not token:
+        return {"valid": False}
+
+    payload = verify_jwt(token)
+    if not payload:
+        return {"valid": False}
+
+    email = payload.get("sub")
+    if not email:
+        return {"valid": False}
+
+    users = request.app.state.users
+    user = await users.find_one({"email": email})
+
+    if not user:
+        return {"valid": False}
+
+    return {"valid": True}
 
 @router.post("/create-team")
 @limiter.limit("10/minute") 
