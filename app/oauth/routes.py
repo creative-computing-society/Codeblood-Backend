@@ -44,7 +44,7 @@ oauth.register(
 
 @router.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for("auth")
+    redirect_uri = "https://api-obscura.ccstiet.com/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
