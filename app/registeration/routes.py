@@ -5,10 +5,10 @@ from fastapi.responses import JSONResponse
 from logging import getLogger
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError
-
+from slowapi import Limiter
 from app.oauth import get_current_user
 from app.utils import generate_initial_team, add_player, add_teamid_to_user
-
+from app.limitting import limiter
 
 from app.utils.jwt import verify_jwt
 
@@ -17,24 +17,10 @@ from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard
 router = APIRouter()
 logger = getLogger(__name__)
 
-# @router.get("/verify")
-# async def is_registered(request: Request, user=Depends(get_current_user)):
-#     """
-#     Checks if the user is registered in a team based on the session cookie.
-#     """
-#     teams: AsyncIOMotorCollection = request.app.state.teams
 
-#     email = user["email"]
-
-    # Check if the user is part of a team
-    # existing_team = await teams.find_one({"players.email": email})
-
-#     if existing_team:
-#         return {"registered": True}
-#     else:
-#         return {"registered": False}
 
 @router.get("/verify")
+@limiter.limit("20/minute") 
 async def is_authenticated(request: Request):
     """
     Checks if the user has a valid session cookie and exists in the DB.
@@ -67,6 +53,7 @@ async def is_authenticated(request: Request):
         return {"registered": False}
 
 @router.post("/create-team")
+@limiter.limit("10/minute") 
 async def register_team(
     request: Request, data: RegisterTeam, user=Depends(get_current_user)
 ):
@@ -123,6 +110,7 @@ async def register_team(
         )
 
 @router.post("/join-team")
+@limiter.limit("10/minute") 
 async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_user)):
     teams: AsyncIOMotorCollection = request.app.state.teams
 
@@ -160,33 +148,10 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
     return JSONResponse({"success": True})
 
 
-# @router.get("/team-dashboard")
-# async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user)):
-#     teams: AsyncIOMotorCollection = request.app.state.teams
 
-#     email = user["email"]
-
-#     existing: Optional[Dict[str, Any]] = await teams.find_one({"players.email": email})
-
-#     if not existing:
-#         return JSONResponse(
-#             {"error": "Player not part of team"},
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#         )
-
-#     # Forcing query to be of Dict[str, Any] cause PyRight got confused
-#     existing = cast(Dict[str, Any], existing)
-
-#     # We are assuming that the initial check in "/create-team" and "/join-team" will prevent the user being in 2 teams
-#     is_leader: bool = existing.get("team_leader_email") == email
-
-#     # Remove _id tag cause whats frontend gonna do with it?
-#     existing.pop("_id")
-#     existing.update({"is_leader": is_leader})
-
-#     return JSONResponse(existing)
 
 @router.get("/team-dashboard")
+@limiter.limit("15/minute") 
 async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user)):
     teams: AsyncIOMotorCollection = request.app.state.teams
 
@@ -221,57 +186,10 @@ async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user))
 
     return JSONResponse(existing)
 
-# @router.post("/team-dashboard")
-# async def update_team_dashboard(
-#     request: Request, data: TeamDashboard, user=Depends(get_current_user)
-# ):
-#     teams: AsyncIOMotorCollection = request.app.state.teams
-
-#     team_code = data.team_code
-#     players = data.players
-
-#     existing = await teams.find_one({"team_code": team_code})
-
-#     if not existing:
-#         return JSONResponse(
-#             {"error": "Frontend, why are you giving me a bad request"},
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#         )
-
-#     hacker_count, wizard_count = 0, 0
-
-#     for player in players:
-#         if player.is_hacker:
-#             hacker_count += 1
-#         elif player.is_wizard:
-#             wizard_count += 1
-#         else:
-#             return JSONResponse(
-#                 {"error": "Invalid wizard/hacker count"},
-#                 status_code=status.HTTP_400_BAD_REQUEST,
-#             )
-
-#     if hacker_count > 2 or wizard_count > 2:
-#         return Response(
-#             "User is trying to have more than 2 wizard/hacker, now you have 4 wizards",
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#         )  # I love messing with users
-
-#     # At this point we have validated that hacker count is less than 2 and wizard count is less than 2, so we insert the query
-#     # But incase of some stupidity, we will have the update query in a try-except block to revert to previous state incase of an error
-
-#     try:
-#         await teams.update_one({"team_code": team_code}, {"$set": {"players": players}})
-#     except Exception as e:
-#         logger.error(f"HOUSTON, WE HAVE A PROBLEM: {e}")
-#         await teams.update_one(
-#             {"team_code": team_code}, {"$set": {"players": existing["players"]}}
-#         )
-
-#     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
 
 
 @router.post("/team-dashboard")
+@limiter.limit("15/minute") 
 async def update_team_dashboard(
     request: Request, data: TeamDashboard, user=Depends(get_current_user)
 ):
