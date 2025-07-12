@@ -89,7 +89,7 @@ async def auth(request: Request):
         max_age=7 * 24 * 60 * 60,  
         path="/"
     )
-    print(response.cookies)
+    print(response)
     return response
 
 @router.post("/logout")
