@@ -86,7 +86,7 @@ async def auth(request: Request):
         httponly=True,
         secure=SECURE_LOGIN, 
         domain=".ccstiet.com" ,# Use SECURE_LOGIN from config 
-        samesite="lax",  
+        samesite="None",  
         max_age=7 * 24 * 60 * 60,  
         path="/"
     )
