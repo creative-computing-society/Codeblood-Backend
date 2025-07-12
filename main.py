@@ -57,7 +57,7 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://obscura.ccstiet.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
