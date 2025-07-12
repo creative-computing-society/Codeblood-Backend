@@ -79,6 +79,7 @@ async def auth(request: Request):
     #Biscuit nhi Cookie set krna hai
     # Cookie will be HTTP-only, secure, and have a max age of 7 days
     response = RedirectResponse(url=f"{FRONTEND_URL}/oauth")
+    
     response.set_cookie(
         key="session_token",
         value=jwt_token,
@@ -88,6 +89,7 @@ async def auth(request: Request):
         max_age=7 * 24 * 60 * 60,  
         path="/"
     )
+    print(response.cookies)
     return response
 
 @router.post("/logout")
