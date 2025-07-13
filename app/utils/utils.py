@@ -21,7 +21,7 @@ def generate_player_uuid(email: str):
     return str(uuid5(UUID_NAMESPACE, email))
 
 def generate_initial_team(
-    team_name: str, player_name: str, email: str, discord_id: str
+    team_name: str, player_name: str, email: str, discord_id: str, rollNo: str
 ) -> Dict[str, Any]:
     team_code = create_team_code()
     player_id = generate_player_uuid(email)
@@ -33,14 +33,15 @@ def generate_initial_team(
                 "name": player_name,
                 "id": player_id,
                 "email": email,
-                "discord_id": discord_id,  # Add this field
+                "discord_id": discord_id,
+                "rollno": rollNo,  # Add rollNo field
             }
         ],
         "team_leader_email": email,
     }
 
 def add_player(
-    team_code: str, player_name: str, email: str, discord_id: str
+    team_code: str, player_name: str, email: str, discord_id: str, rollNo: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     player_id = generate_player_uuid(player_name)
 
@@ -48,18 +49,20 @@ def add_player(
         {
             "team_code": team_code,
             "$expr": {"$lt": [{"$size": "$players"}, 4]},
-        },  # This part is filtering for 4 players
+        },
         {
             "$push": {
                 "players": {
                     "name": player_name,
                     "id": player_id,
                     "email": email,
-                    "discord_id": discord_id,  # Add this field
+                    "discord_id": discord_id,
+                    "rollno": rollNo,  # Add rollNo field
                 }
             }
-        },  # This part adds the player into the database
+        },
     )
+
 
 
 async def add_teamid_to_user(request: Request, team_code: str, email: str):

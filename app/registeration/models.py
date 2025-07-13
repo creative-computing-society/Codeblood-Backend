@@ -1,20 +1,58 @@
 from typing import List
 from pydantic import BaseModel, EmailStr, field_validator
-
+import re
 
 class RegisterTeam(BaseModel):
     team_name: str
     username: str
     discord_id: str  # Add this field
+    rollno: str  # Add rollno field
+
+    @field_validator("team_name")
+    @classmethod
+    def validate_team_name(cls, team_name):
+        if not re.match(r"^[\w ]{1,20}$", team_name):
+            raise ValueError("Invalid team name format")
+        return team_name
+
+    @field_validator("username", "discord_id")
+    @classmethod
+    def validate_username_and_discord_id(cls, value):
+        if not re.match(r"^(?![\.])[a-zA-Z0-9.]{2,32}(?<![_\.])$", value):
+            raise ValueError("Invalid username or discord ID format")
+        return value
+
+    @field_validator("rollNo")
+    @classmethod
+    def validate_rollno(cls, rollno):
+        if not re.match(r"^\d{4,12}$", rollno):
+            raise ValueError("Invalid roll number format")
+        return rollno
 
 class JoinTeam(BaseModel):
     team_code: str
     username: str
     discord_id: str  # Add this field
+    rollno: str  # Add rollno field
+
+    @field_validator("username", "discord_id")
+    @classmethod
+    def validate_username_and_discord_id(cls, value):
+        if not re.match(r"^(?![\.])[a-zA-Z0-9.]{2,32}(?<![_\.])$", value):
+            raise ValueError("Invalid username or discord ID format")
+        return value
+
+    @field_validator("rollNo")
+    @classmethod
+    def validate_rollno(cls, rollno):
+        if not re.match(r"^\d{1,12}$", rollno):
+            raise ValueError("Invalid roll number format")
+        return rollno
 
 class Player(BaseModel):
     name: str
     id: str
+    rollno: str  # Add rollno field
     email: EmailStr
     is_hacker: bool
     is_wizard: bool

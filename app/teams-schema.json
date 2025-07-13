@@ -9,6 +9,7 @@
       "name": "str",
       "email": "@thapar.edu",
       "discord_id": "str",
+      "rollno": "str",  
       "is_hacker": true,
       "is_wizard": false
     }
