@@ -36,7 +36,7 @@ async def get_current_user(request: Request):
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    user = await users.find_one({"email": payload["sub"]})
+    user = await users.find_one({"email": payload["email"]})
     if not user:
         raise HTTPException(status_code=403, detail="User not registered")
 

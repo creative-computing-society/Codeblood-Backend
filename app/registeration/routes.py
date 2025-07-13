@@ -33,7 +33,7 @@ async def is_authenticated(request: Request):
     if not payload:
         return {"registered": False}
 
-    email = payload.get("sub")
+    email = payload.get("email")
     if not email:
         return {"registered": False}
 
@@ -67,7 +67,7 @@ async def token_verify(request: Request):
     if not payload:
         return {"valid": False}
 
-    email = payload.get("sub")
+    email = payload.get("email")
     if not email:
         return {"valid": False}
 

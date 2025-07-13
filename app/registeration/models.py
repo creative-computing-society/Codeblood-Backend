@@ -5,8 +5,8 @@ import re
 class RegisterTeam(BaseModel):
     team_name: str
     username: str
-    discord_id: str  # Add this field
-    rollno: str  # Add rollno field
+    discord_id: str
+    rollNo: str  # Correct field name to match frontend key
 
     @field_validator("team_name")
     @classmethod
@@ -22,18 +22,18 @@ class RegisterTeam(BaseModel):
             raise ValueError("Invalid username or discord ID format")
         return value
 
-    @field_validator("rollNo")
+    @field_validator("rollNo")  # Ensure the decorator references the correct field
     @classmethod
-    def validate_rollno(cls, rollno):
-        if not re.match(r"^\d{4,12}$", rollno):
+    def validate_rollno(cls, rollNo):
+        if not re.match(r"^\d{1,12}$", rollNo):
             raise ValueError("Invalid roll number format")
-        return rollno
+        return rollNo
 
 class JoinTeam(BaseModel):
     team_code: str
     username: str
-    discord_id: str  # Add this field
-    rollno: str  # Add rollno field
+    discord_id: str
+    rollNo: str  # Correct field name to match frontend key
 
     @field_validator("username", "discord_id")
     @classmethod
@@ -42,12 +42,12 @@ class JoinTeam(BaseModel):
             raise ValueError("Invalid username or discord ID format")
         return value
 
-    @field_validator("rollNo")
+    @field_validator("rollNo")  # Ensure the decorator references the correct field
     @classmethod
-    def validate_rollno(cls, rollno):
-        if not re.match(r"^\d{1,12}$", rollno):
+    def validate_rollno(cls, rollNo):
+        if not re.match(r"^\d{1,12}$", rollNo):
             raise ValueError("Invalid roll number format")
-        return rollno
+        return rollNo
 
 class Player(BaseModel):
     name: str

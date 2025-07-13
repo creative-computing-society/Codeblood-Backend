@@ -25,7 +25,7 @@ TOKEN_EXPIRY = (
 
 def create_jwt(email: str, access_token: str):
     payload = {
-        "sub": email,
+        "email": email,
         "token": access_token,
         "exp": datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRY),
     }

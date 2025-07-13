@@ -104,7 +104,7 @@ async def logout(request: Request):
 
     payload = verify_jwt(session_token)
 
-    email = payload.get("sub")
+    email = payload.get("email")
     print("Decoded JWT payload:", payload)
 
     if not email:
@@ -132,7 +132,7 @@ async def get_user_info(request: Request):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    email = payload.get("sub")
+    email = payload.get("email")
     if not email:
         raise HTTPException(status_code=400, detail="Email not found in token")
 
