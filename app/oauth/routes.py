@@ -117,7 +117,7 @@ async def logout(request: Request):
 
     # Clear the session cookie
     response = JSONResponse({"message": "Logged out successfully"}, status_code=200)
-    response.delete_cookie(key="session_token", path="/", domain=".ccstiet.com")
+    response.delete_cookie(key="session_token", path="/")
 
     return response
 
