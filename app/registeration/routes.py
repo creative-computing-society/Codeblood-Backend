@@ -270,3 +270,97 @@ async def update_team_dashboard(
         )
 
     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
+
+@router.post("/leave-team")
+@limiter.limit("10/minute")
+async def leave_team(request: Request, user=Depends(get_current_user)):
+    """
+    Allows a non-team leader user to leave a team.
+    Updates the database to remove the user from the team.
+    """
+    teams: AsyncIOMotorCollection = request.app.state.teams
+
+    email = user["email"]
+
+    # Find the team the user belongs to
+    existing_team = await teams.find_one({"players.email": email})
+
+    if not existing_team:
+        return JSONResponse(
+            {"error": "User is not part of any team"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Check if the user is the team leader
+    if existing_team.get("team_leader_email") == email:
+        return JSONResponse(
+            {"error": "Team leader cannot leave the team. Use 'remove-from-team' instead."},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Remove the user from the team
+    try:
+        await teams.update_one(
+            {"team_code": existing_team["team_code"]},
+            {"$pull": {"players": {"email": email}}}
+        )
+        return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error while removing user from team: {e}")
+        return JSONResponse(
+            {"error": "Failed to leave the team"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@router.post("/remove-from-team")
+@limiter.limit("10/minute")
+async def remove_from_team(request: Request, email_to_remove: str, user=Depends(get_current_user)):
+    """
+    Allows the team leader to remove a user from the team.
+    Updates the database to remove the specified user from the team.
+    """
+    teams: AsyncIOMotorCollection = request.app.state.teams
+
+    email = user["email"]
+
+    # Find the team the leader belongs to
+    existing_team = await teams.find_one({"players.email": email})
+
+    if not existing_team:
+        return JSONResponse(
+            {"error": "Team leader is not part of any team"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Check if the user is the team leader
+    if existing_team.get("team_leader_email") != email:
+        return JSONResponse(
+            {"error": "Only the team leader can remove members from the team"},
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the user to remove exists in the team
+    user_to_remove = next(
+        (player for player in existing_team.get("players", []) if player["email"] == email_to_remove),
+        None
+    )
+    if not user_to_remove:
+        return JSONResponse(
+            {"error": "User to remove is not part of the team"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Remove the user from the team
+    try:
+        await teams.update_one(
+            {"team_code": existing_team["team_code"]},
+            {"$pull": {"players": {"email": email_to_remove}}}
+        )
+        return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error while removing user from team: {e}")
+        return JSONResponse(
+            {"error": "Failed to remove the user from the team"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
