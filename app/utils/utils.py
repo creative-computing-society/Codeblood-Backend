@@ -21,7 +21,7 @@ def generate_player_uuid(email: str):
     return str(uuid5(UUID_NAMESPACE, email))
 
 def generate_initial_team(
-    team_name: str, player_name: str, email: str, discord_id: str, rollNo: str
+    team_name: str, player_name: str, email: str, discord_id: str, rollno: str
 ) -> Dict[str, Any]:
     team_code = create_team_code()
     player_id = generate_player_uuid(email)
@@ -34,14 +34,14 @@ def generate_initial_team(
                 "id": player_id,
                 "email": email,
                 "discord_id": discord_id,
-                "rollno": rollNo,  # Add rollNo field
+                "rollno": rollno,  # Add rollNo field
             }
         ],
         "team_leader_email": email,
     }
 
 def add_player(
-    team_code: str, player_name: str, email: str, discord_id: str, rollNo: str
+    team_code: str, player_name: str, email: str, discord_id: str, rollno: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     player_id = generate_player_uuid(player_name)
 
@@ -57,7 +57,7 @@ def add_player(
                     "id": player_id,
                     "email": email,
                     "discord_id": discord_id,
-                    "rollno": rollNo,  # Add rollNo field
+                    "rollno": rollno,  # Add rollNo field
                 }
             }
         },

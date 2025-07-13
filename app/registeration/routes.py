@@ -90,7 +90,7 @@ async def register_team(
     team_name = data.team_name
     player_name = data.username
     discord_id = data.discord_id
-    rollNo = data.rollNo  # Use rollNo from frontend
+    rollno = data.rollno  # Use rollNo from frontend
 
     # Check to see if user is in any other team
     check_user_task = teams.find_one({"players.email": user["email"]})
@@ -113,8 +113,8 @@ async def register_team(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    team_info = generate_initial_team(team_name, player_name, user["email"], discord_id, rollNo)
-    team_info["players"][0]["rollno"] = rollNo  # Add rollNo to the team leader
+    team_info = generate_initial_team(team_name, player_name, user["email"], discord_id, rollno)
+    team_info["players"][0]["rollno"] = rollno  # Add rollNo to the team leader
 
     try:
         await teams.insert_one(team_info)
@@ -145,7 +145,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
 
     team_code = data.team_code
     discord_id = data.discord_id
-    rollNo = data.rollNo  # Use rollNo from frontend
+    rollno = data.rollno  # Use rollNo from frontend
 
     existing = await teams.find_one({"team_code": team_code})
 
@@ -163,7 +163,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-    update_info = add_player(team_code, data.username, user["email"], discord_id, rollNo)
+    update_info = add_player(team_code, data.username, user["email"], discord_id, rollno)
     result = await teams.update_one(*update_info)
 
     # Add _id of team to user as "team_id" tag
