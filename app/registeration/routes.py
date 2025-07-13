@@ -182,6 +182,10 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
 @router.get("/team-dashboard")
 @limiter.limit("15/minute") 
 async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user)):
+    """
+    Fetches the team dashboard for the logged-in user.
+    Includes team details and the logged-in user's email.
+    """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
     email = user["email"]
@@ -213,9 +217,10 @@ async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user))
                 existing.update({"is_hacker": player["is_hacker"]})
             break
 
+    # Add the current user's email to the response
+    existing.update({"currentUserEmail": email})
+
     return JSONResponse(existing)
-
-
 
 @router.post("/team-dashboard")
 @limiter.limit("15/minute") 
