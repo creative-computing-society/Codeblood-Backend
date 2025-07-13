@@ -12,7 +12,7 @@ from app.limitting import limiter
 
 from app.utils.jwt import verify_jwt
 
-from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard
+from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, LeaveTeamRequest, RemoveFromTeamRequest
 
 router = APIRouter()
 logger = getLogger(__name__)
@@ -271,16 +271,18 @@ async def update_team_dashboard(
 
     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
 
+
+
 @router.post("/leave-team")
 @limiter.limit("10/minute")
-async def leave_team(request: Request, user=Depends(get_current_user)):
+async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_current_user)):
     """
     Allows a non-team leader user to leave a team.
     Updates the database to remove the user from the team.
     """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
-    email = user["email"]
+    email = data.email  # Extract email from JSON body
 
     # Find the team the user belongs to
     existing_team = await teams.find_one({"players.email": email})
@@ -315,7 +317,7 @@ async def leave_team(request: Request, user=Depends(get_current_user)):
 
 @router.post("/remove-from-team")
 @limiter.limit("10/minute")
-async def remove_from_team(request: Request, email_to_remove: str, user=Depends(get_current_user)):
+async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=Depends(get_current_user)):
     """
     Allows the team leader to remove a user from the team.
     Updates the database to remove the specified user from the team.
@@ -323,6 +325,7 @@ async def remove_from_team(request: Request, email_to_remove: str, user=Depends(
     teams: AsyncIOMotorCollection = request.app.state.teams
 
     email = user["email"]
+    email_to_remove = data.email_to_remove  # Extract email_to_remove from JSON body
 
     # Find the team the leader belongs to
     existing_team = await teams.find_one({"players.email": email})

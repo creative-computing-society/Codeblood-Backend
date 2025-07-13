@@ -78,3 +78,10 @@ class Player(BaseModel):
 class TeamDashboard(BaseModel):
     team_code: str
     players: List[Player]
+
+
+class LeaveTeamRequest(BaseModel):
+    email: str  
+
+class RemoveFromTeamRequest(BaseModel):
+    email_to_remove: str
