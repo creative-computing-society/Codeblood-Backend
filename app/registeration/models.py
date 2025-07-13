@@ -52,7 +52,7 @@ class JoinTeam(BaseModel):
 class Player(BaseModel):
     name: str
     id: str
-    rollno: str  # Add rollno field
+    rollNo: str  # Add rollno field
     email: EmailStr
     is_hacker: bool
     is_wizard: bool
