@@ -9,3 +9,4 @@ class HealthCheckTest(unittest.TestCase):
         response = client.get("/test")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message": "backend is up and running!"})
+#OKAY
