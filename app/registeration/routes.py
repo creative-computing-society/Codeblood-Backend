@@ -17,7 +17,35 @@ from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, Leav
 router = APIRouter()
 logger = getLogger(__name__)
 
+# from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+# from jinja2 import Template
 
+
+# conf = ConnectionConfig(
+#     MAIL_USERNAME=getenv("MAIL_USERNAME"),
+#     MAIL_PASSWORD=getenv("MAIL_PASSWORD"),
+#     MAIL_FROM=getenv("MAIL_FROM"),
+#     MAIL_PORT=587,
+#     MAIL_SERVER="smtp.gmail.com",
+#     MAIL_TLS=True,
+#     MAIL_SSL=False,
+#     USE_CREDENTIALS=True,
+# )
+
+# async def send_email(name: str, team_name: str, email: str, template_path: str):
+#     with open(template_path, "r") as file:
+#         template = Template(file.read())
+#     html_content = template.render(name=name, team_name=team_name)
+
+#     message = MessageSchema(
+#         subject="Team Registration Confirmation",
+#         recipients=[email],
+#         body=html_content,
+#         subtype="html",
+#     )
+
+#     fm = FastMail(conf)
+#     await fm.send_message(message)
 
 @router.get("/checkRegistered")
 @limiter.limit("20/minute") 
@@ -370,5 +398,50 @@ async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=D
         logger.error(f"Error while removing user from team: {e}")
         return JSONResponse(
             {"error": "Failed to remove the user from the team"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+@router.delete("/delete-team")
+@limiter.limit("5/minute")
+async def delete_team(request: Request, user=Depends(get_current_user)):
+    """
+    Allows the team leader to delete the team if they are the only member.
+    Updates the database to remove the team.
+    """
+    teams: AsyncIOMotorCollection = request.app.state.teams
+
+    email = user["email"]
+
+    
+    existing_team = await teams.find_one({"team_leader_email": email})
+
+    if not existing_team:
+        return JSONResponse(
+            {"error": "Team leader is not part of any team"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    
+    if existing_team.get("team_leader_email") != email:
+        return JSONResponse(
+            {"error": "Only the team leader can delete the team"},
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    
+    if len(existing_team.get("players", [])) > 1:
+        return JSONResponse(
+            {"error": "Team cannot be deleted as it has more than one member"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    
+    try:
+        await teams.delete_one({"team_code": existing_team["team_code"]})
+        return JSONResponse({"success": True, "message": "Team deleted successfully"}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error while deleting team: {e}")
+        return JSONResponse(
+            {"error": "Failed to delete the team"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
