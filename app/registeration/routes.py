@@ -500,7 +500,7 @@ async def delete_team(request: Request, user=Depends(get_current_user)):
             name=user["username"],  # Pass the team leader's name
             team_name=existing_team["team_name"],  # Pass the team name
             email=email,  # Send email to the team leader
-            template_path="/home/in-l-f3rj863/Downloads/Hari/Hari/Obscura_backend/app/registeration/DropMemberMail.html",
+            template_path="/app/app/registeration/DropMemberMail.html",
         )
 
         return JSONResponse({"success": True, "message": "Team deleted successfully"}, status_code=status.HTTP_200_OK)
