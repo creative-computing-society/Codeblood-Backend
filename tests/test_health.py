@@ -12,3 +12,4 @@ class HealthCheckTest(unittest.TestCase):
 #OKAY
 #OKAY2
 #PORTAL UP
+#PORTAL UP2
