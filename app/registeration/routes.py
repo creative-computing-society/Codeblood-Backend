@@ -21,7 +21,7 @@ router = APIRouter()
 logger = getLogger(__name__)
 
 MAIL_USERNAME = getenv("MAIL_USERNAME")
-print("MAIL_USERNAME:", MAIL_USERNAME)  # Debugging line to check if MAIL_USERNAME is set
+# print("MAIL_USERNAME:", MAIL_USERNAME)  # Debugging line to check if MAIL_USERNAME is set
 MAIL_PASSWORD = getenv("MAIL_PASSWORD")
 # assert MAIL_USERNAME and MAIL_PASSWORD, "MAIL_USERNAME and MAIL_PASSWORD must be set in environment variables"
 MAIL_FROM = getenv("MAIL_FROM")

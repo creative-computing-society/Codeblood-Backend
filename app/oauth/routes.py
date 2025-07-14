@@ -7,6 +7,7 @@ from starlette.responses import RedirectResponse
 from dotenv import load_dotenv
 from os import getenv
 from logging import getLogger
+from app.limitting import limiter
 
 
 FRONTEND_URL = getenv("FRONTEND_URL", "http://127.0.0.1:3000")
@@ -43,6 +44,7 @@ oauth.register(
 
 
 @router.get("/login")
+@limiter.limit("8/minute") 
 async def login(request: Request):
     redirect_uri = "https://api-obscura.ccstiet.com/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -50,6 +52,7 @@ async def login(request: Request):
 
 
 @router.get("/auth")
+@limiter.limit("8/minute") 
 async def auth(request: Request):
     token = await oauth.google.authorize_access_token(request)
     resp = await oauth.google.get(
@@ -94,6 +97,7 @@ async def auth(request: Request):
     return response
 
 @router.post("/logout")
+@limiter.limit("8/minute") 
 async def logout(request: Request):
     """
     Logs the user out by clearing the session cookie and removing the stored JWT from the DB.
@@ -122,6 +126,7 @@ async def logout(request: Request):
     return response
 
 @router.get("/me")
+@limiter.limit("8/minute") 
 async def get_user_info(request: Request):
     token = request.cookies.get("session_token")
     if not token:
