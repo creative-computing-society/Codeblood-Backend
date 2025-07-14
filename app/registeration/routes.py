@@ -9,6 +9,9 @@ from slowapi import Limiter
 from app.oauth import get_current_user
 from app.utils import generate_initial_team, add_player, add_teamid_to_user
 from app.limitting import limiter
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from jinja2 import Template
+from os import getenv
 
 from app.utils.jwt import verify_jwt
 
@@ -17,35 +20,40 @@ from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, Leav
 router = APIRouter()
 logger = getLogger(__name__)
 
-# from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-# from jinja2 import Template
+MAIL_USERNAME = getenv("MAIL_USERNAME")
+print("MAIL_USERNAME:", MAIL_USERNAME)  # Debugging line to check if MAIL_USERNAME is set
+MAIL_PASSWORD = getenv("MAIL_PASSWORD")
+# assert MAIL_USERNAME and MAIL_PASSWORD, "MAIL_USERNAME and MAIL_PASSWORD must be set in environment variables"
+MAIL_FROM = getenv("MAIL_FROM")
+# Email configuration
+conf = ConnectionConfig(
+    MAIL_USERNAME=MAIL_USERNAME,
+    MAIL_PASSWORD=MAIL_PASSWORD,  # App password
+    MAIL_FROM=MAIL_FROM,
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_TLS=True,
+    MAIL_SSL=False,
+    USE_CREDENTIALS=True,
+)
 
+async def send_email(name: str, team_name: str, email: str, template_path: str):
+    """
+    Sends an email using the provided template and dynamic fields.
+    """
+    with open(template_path, "r") as file:
+        template = Template(file.read())
+    html_content = template.render(name=name, team_name=team_name)
 
-# conf = ConnectionConfig(
-#     MAIL_USERNAME=getenv("MAIL_USERNAME"),
-#     MAIL_PASSWORD=getenv("MAIL_PASSWORD"),
-#     MAIL_FROM=getenv("MAIL_FROM"),
-#     MAIL_PORT=587,
-#     MAIL_SERVER="smtp.gmail.com",
-#     MAIL_TLS=True,
-#     MAIL_SSL=False,
-#     USE_CREDENTIALS=True,
-# )
+    message = MessageSchema(
+        subject="Team Registration Confirmation",
+        recipients=[email],
+        body=html_content,
+        subtype="html",
+    )
 
-# async def send_email(name: str, team_name: str, email: str, template_path: str):
-#     with open(template_path, "r") as file:
-#         template = Template(file.read())
-#     html_content = template.render(name=name, team_name=team_name)
-
-#     message = MessageSchema(
-#         subject="Team Registration Confirmation",
-#         recipients=[email],
-#         body=html_content,
-#         subtype="html",
-#     )
-
-#     fm = FastMail(conf)
-#     await fm.send_message(message)
+    fm = FastMail(conf)
+    await fm.send_message(message)
 
 @router.get("/checkRegistered")
 @limiter.limit("20/minute") 
@@ -107,26 +115,22 @@ async def token_verify(request: Request):
 
     return {"valid": True}
 
+
+
 @router.post("/create-team")
 @limiter.limit("10/minute") 
 async def register_team(
     request: Request, data: RegisterTeam, user=Depends(get_current_user)
 ):
     teams: AsyncIOMotorCollection = request.app.state.teams
-    users: AsyncIOMotorCollection = request.app.state.users
 
     team_name = data.team_name
     player_name = data.username
     discord_id = data.discord_id
-    rollno = data.rollno  # Use rollNo from frontend
+    rollno = data.rollno
 
-    # Check to see if user is in any other team
     check_user_task = teams.find_one({"players.email": user["email"]})
-
-    # Check to see if team name is taken or not
     check_team_task = teams.find_one({"team_name": team_name})
-
-    # Runs them parrallely cause why not
     user_in_team, team_exists = await asyncio.gather(check_user_task, check_team_task)
 
     if user_in_team:
@@ -142,14 +146,20 @@ async def register_team(
         )
 
     team_info = generate_initial_team(team_name, player_name, user["email"], discord_id, rollno)
-    team_info["players"][0]["rollno"] = rollno  # Add rollNo to the team leader
+    team_info["players"][0]["rollno"] = rollno
 
     try:
         await teams.insert_one(team_info)
-
-        # Add _id of team to user as "team_id" tag
         await add_teamid_to_user(request, team_info.get("team_code", ""), user["email"])
-
+        print(1)
+        # Send email
+        await send_email(
+            name=player_name,
+            team_name=team_name,
+            email=user["email"],
+            template_path="TeamRegistration.html",
+        )
+        print(2)
         return JSONResponse({"team_code": team_info.get("team_code")})
 
     except DuplicateKeyError:
@@ -173,7 +183,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
 
     team_code = data.team_code
     discord_id = data.discord_id
-    rollno = data.rollno  # Use rollNo from frontend
+    rollno = data.rollno
 
     existing = await teams.find_one({"team_code": team_code})
 
@@ -183,7 +193,6 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Check if player is already part of the team
     for player in existing.get("players", []):
         if player["email"] == user["email"]:
             return JSONResponse(
@@ -194,7 +203,6 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
     update_info = add_player(team_code, data.username, user["email"], discord_id, rollno)
     result = await teams.update_one(*update_info)
 
-    # Add _id of team to user as "team_id" tag
     await add_teamid_to_user(request, team_code, user["email"])
 
     if result.modified_count == 0:
@@ -202,6 +210,14 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             {"error": "Maximum team capacity has been reached!"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
+
+    # Send email
+    await send_email(
+        name=data.username,
+        team_name=existing["team_name"],
+        email=user["email"],
+        template_path="TeamRegistration.html",
+    )
 
     return JSONResponse({"success": True})
 
