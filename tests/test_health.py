@@ -11,3 +11,4 @@ class HealthCheckTest(unittest.TestCase):
         self.assertEqual(response.json(), {"message": "backend is up and running!"})
 #OKAY
 #OKAY2
+#PORTAL UP
