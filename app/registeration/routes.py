@@ -43,7 +43,7 @@ async def send_email(name: str, team_name: str, email: str, template_path: str):
     Sends an email using the provided template and dynamic fields.
     """
     # Use absolute path for the template
-    absolute_template_path = "/home/jsriharisesh_be24/Codeblood-Backend/app/registeration/TeamRegistration.html"
+    absolute_template_path = "/app/registeration/TeamRegistration.html"
 
     with open(absolute_template_path, "r") as file:
         template = Template(file.read())
