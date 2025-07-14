@@ -2,6 +2,7 @@ from typing import List
 from pydantic import BaseModel, EmailStr, field_validator
 import re
 
+
 class RegisterTeam(BaseModel):
     team_name: str
     username: str

@@ -150,13 +150,10 @@ async def register_team(
         )
 
     team_info = generate_initial_team(team_name, player_name, user["email"], discord_id, rollno)
-    team_info["players"][0]["rollno"] = rollno
 
     try:
         await teams.insert_one(team_info)
         await add_teamid_to_user(request, team_info.get("team_code", ""), user["email"])
-        print(1)
-        # Send email
         await send_email(
             subject="OBSCURA - Team Registration Confirmation",
             name=player_name,
@@ -164,7 +161,6 @@ async def register_team(
             email=user["email"],
             template_path="/app/app/registeration/TeamRegistration2.html",
         )
-        print(2)
         return JSONResponse({"team_code": team_info.get("team_code")})
 
     except DuplicateKeyError:
@@ -184,17 +180,12 @@ async def register_team(
 @router.post("/join-team")
 @limiter.limit("10/minute") 
 async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_user)):
-    """
-    Allows a user to join a team.
-    Updates the database and sends an email notification to the user.
-    """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
     team_code = data.team_code
     discord_id = data.discord_id
     rollno = data.rollno
 
-    # Check if the user is already part of another team
     existing_team = await teams.find_one({"players.email": user["email"]})
     if existing_team:
         return JSONResponse(
@@ -202,7 +193,6 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Find the team by team code
     team_to_join = await teams.find_one({"team_code": team_code})
 
     if not team_to_join:
@@ -211,8 +201,8 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Add the user to the team
-    update_info = add_player(team_code, data.username, user["email"], discord_id, rollno)
+    existing_players = team_to_join.get("players", [])
+    update_info = add_player(team_code, data.username, user["email"], discord_id, rollno, existing_players)
     result = await teams.update_one(*update_info)
 
     await add_teamid_to_user(request, team_code, user["email"])
@@ -223,13 +213,12 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Send email notification
     try:
         await send_email(
             subject="OBSCURA - Team Join Confirmation",
-            name=data.username,  # Pass the user's name
-            team_name=team_to_join["team_name"],  # Pass the team name
-            email=user["email"],  # Send email to the user joining the team
+            name=data.username,
+            team_name=team_to_join["team_name"],
+            email=user["email"],
             template_path="/app/app/registeration/TeamRegistration2.html",
         )
     except Exception as e:
