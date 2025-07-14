@@ -19,7 +19,7 @@ from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, Leav
 
 router = APIRouter()
 logger = getLogger(__name__)
-
+ALLOWED_ORIGINS = [getenv("FRONTEND_URL")]
 MAIL_USERNAME = getenv("MAIL_USERNAME")
 # print("MAIL_USERNAME:", MAIL_USERNAME)  # Debugging line to check if MAIL_USERNAME is set
 MAIL_PASSWORD = getenv("MAIL_PASSWORD")
@@ -62,9 +62,13 @@ async def send_email(name: str, team_name: str, email: str, template_path: str, 
 @router.get("/checkRegistered")
 @limiter.limit("20/minute") 
 async def is_authenticated(request: Request):
-    """
-    Checks if the user has a valid session cookie and exists in the DB.
-    """
+
+    origin = request.headers.get("origin")
+    if origin not in ALLOWED_ORIGINS:
+        return JSONResponse(
+            {"error": "Unauthorized origin"},
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
     token = request.cookies.get("session_token")
     if not token:
         return {"registered": False}
@@ -99,6 +103,12 @@ async def token_verify(request: Request):
     Verifies the validity of the session token received in the cookie.
     Returns a boolean indicating whether the token is valid or not.
     """
+    origin = request.headers.get("origin")
+    if origin not in ALLOWED_ORIGINS:
+        return JSONResponse(
+            {"error": "Unauthorized origin"},
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
     token = request.cookies.get("session_token")
     if not token:
         return {"valid": False}
