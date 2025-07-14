@@ -9,36 +9,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Code
+      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Run pre-deploy tests (edit as per your codebase)
-      - name: Run pre-deployment tests
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. Run pre-deployment tests
+      - name: Run backend tests
         run: |
           echo "Running tests..."
-          python -m unittest discover -s tests || exit 1
+          python -m unittest discover -s tests
 
-      # 3. Setup SSH for deployment
+      # 5. Setup SSH
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # 4. SSH into VM and pull latest code
+      # 6. SSH into GCP VM and deploy
       - name: SSH into GCP VM and update app
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd /home/ubuntu/YOUR_REPO_FOLDER  # Replace with correct path
-            echo "Pulling latest code..."
+            cd /home/ubuntu/YOUR_REPO_FOLDER
             git pull origin main
-            echo "Restarting Docker Compose..."
             docker compose down
             docker compose up --build -d
           EOF
 
-      # 5. Health check: test backend API is up
-      - name: Check API Health
+      # 7. API Health check
+      - name: Verify backend is running
         run: |
-          echo "Checking backend health at https://api-obscura.ccstiet.com/test"
+          echo "Checking backend at https://api-obscura.ccstiet.com/test"
           curl --fail --retry 5 --retry-delay 3 https://api-obscura.ccstiet.com/test
