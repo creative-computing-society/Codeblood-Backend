@@ -445,7 +445,7 @@ async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=D
             name=email_to_remove,  # Pass the user's name
             team_name=existing_team["team_name"],  # Pass the team name
             email=email_to_remove,  # Send email to the removed user
-            template_path="/app/app/registeration/DropMemberMail.html",
+            template_path="/app/app/registeration/DropMemberMail2.html",
         )
 
         return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
