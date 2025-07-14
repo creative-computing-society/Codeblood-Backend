@@ -194,22 +194,22 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
     discord_id = data.discord_id
     rollno = data.rollno
 
-    # Find the team by team code
-    existing_team = await teams.find_one({"team_code": team_code})
+    # Check if the user is already part of another team
+    existing_team = await teams.find_one({"players.email": user["email"]})
+    if existing_team:
+        return JSONResponse(
+            {"error": "User is already part of another team!"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
-    if not existing_team:
+    # Find the team by team code
+    team_to_join = await teams.find_one({"team_code": team_code})
+
+    if not team_to_join:
         return JSONResponse(
             {"error": "Team code invalid or player already in team"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
-
-    # Check if the user is already in the team
-    for player in existing_team.get("players", []):
-        if player["email"] == user["email"]:
-            return JSONResponse(
-                {"error": "Player already in team"},
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
 
     # Add the user to the team
     update_info = add_player(team_code, data.username, user["email"], discord_id, rollno)
@@ -228,7 +228,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
         await send_email(
             subject="OBSCURA - Team Join Confirmation",
             name=data.username,  # Pass the user's name
-            team_name=existing_team["team_name"],  # Pass the team name
+            team_name=team_to_join["team_name"],  # Pass the team name
             email=user["email"],  # Send email to the user joining the team
             template_path="/app/app/registeration/TeamRegistration2.html",
         )
@@ -240,7 +240,6 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
         )
 
     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
-
 
 
 @router.get("/team-dashboard")
