@@ -12,7 +12,8 @@ from app.oauth import oauth_router
 from app.registeration import registeration_routes
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db, init_users, init_teams, init_lobbies
-
+from fastapi.responses import JSONResponse  
+from starlette import status  
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
