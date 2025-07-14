@@ -1,7 +1,7 @@
 from secrets import choice
 from string import ascii_letters, digits
 from uuid import uuid5, UUID
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, List
 from bson import ObjectId
 from fastapi import Request
 from motor.motor_asyncio import AsyncIOMotorCollection
