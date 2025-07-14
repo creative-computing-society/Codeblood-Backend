@@ -161,7 +161,7 @@ async def register_team(
             name=player_name,
             team_name=team_name,
             email=user["email"],
-            template_path="/app/app/registeration/TeamRegistration.html",
+            template_path="/app/app/registeration/TeamRegistration2.html",
         )
         print(2)
         return JSONResponse({"team_code": team_info.get("team_code")})
