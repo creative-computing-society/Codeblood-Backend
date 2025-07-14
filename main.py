@@ -73,7 +73,7 @@ ALLOWED_ORIGINS = [FRONTEND_URL]
 
 @app.middleware("http")
 async def validate_origin_middleware(request: Request, call_next):
-    if request.url.path in ["/verify", "/checkRegistered", "/auth", "/login"]:
+    if request.url.path in ["/verify", "/checkRegistered", "/auth"]:
         origin = request.headers.get("origin")
         if origin not in ALLOWED_ORIGINS:
             return JSONResponse(

@@ -12,7 +12,8 @@ from app.limitting import limiter
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from jinja2 import Template
 from os import getenv
-
+from fastapi.responses import JSONResponse  
+from starlette import status  
 from app.utils.jwt import verify_jwt
 
 from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, LeaveTeamRequest, RemoveFromTeamRequest
