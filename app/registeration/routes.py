@@ -379,7 +379,7 @@ async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_
         # Send email notification
         await send_email(
             subject="OBSCURA - Team LUpdate Notification",
-            name=data.name,  # Pass the user's name
+            name=email,  # Pass the user's name
             team_name=existing_team["team_name"],  # Pass the team name
             email=email,  # Send email to the user leaving the team
             template_path="/app/app/registeration/DropMemberMail.html",
@@ -441,8 +441,8 @@ async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=D
 
         # Send email notification
         await send_email(
-            subject="OBSCURA - Team LUpdate Notification",
-            name=user_to_remove["username"],  # Pass the user's name
+            subject="OBSCURA - Team Update Notification",
+            name=email_to_remove,  # Pass the user's name
             team_name=existing_team["team_name"],  # Pass the team name
             email=email_to_remove,  # Send email to the removed user
             template_path="/app/app/registeration/DropMemberMail.html",
