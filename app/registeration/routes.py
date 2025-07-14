@@ -213,16 +213,16 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
         )
 
     existing_players = team_to_join.get("players", [])
-    update_info = add_player(team_code, data.username, user["email"], discord_id, rollno, existing_players)
-    result = await teams.update_one(*update_info)
-
-    await add_teamid_to_user(request, team_code, user["email"])
-
-    if result.modified_count == 0:
+    if len(existing_players) >= 4:  # Check if team already has 4 players
         return JSONResponse(
             {"error": "Maximum team capacity has been reached!"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
+
+    update_info = add_player(team_code, data.username, user["email"], discord_id, rollno, existing_players)
+    result = await teams.update_one(*update_info)
+
+    await add_teamid_to_user(request, team_code, user["email"])
 
     try:
         await send_email(
