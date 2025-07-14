@@ -461,13 +461,13 @@ async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=D
 async def delete_team(request: Request, user=Depends(get_current_user)):
     """
     Allows the team leader to delete the team if they are the only member.
-    Updates the database to remove the team.
+    Updates the database to remove the team and sends an email notification.
     """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
     email = user["email"]
 
-    
+    # Find the team the leader belongs to
     existing_team = await teams.find_one({"team_leader_email": email})
 
     if not existing_team:
@@ -476,23 +476,33 @@ async def delete_team(request: Request, user=Depends(get_current_user)):
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    
+    # Check if the user is the team leader
     if existing_team.get("team_leader_email") != email:
         return JSONResponse(
             {"error": "Only the team leader can delete the team"},
             status_code=status.HTTP_403_FORBIDDEN,
         )
 
-    
+    # Check if the team has more than one member
     if len(existing_team.get("players", [])) > 1:
         return JSONResponse(
             {"error": "Team cannot be deleted as it has more than one member"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    
+    # Delete the team
     try:
         await teams.delete_one({"team_code": existing_team["team_code"]})
+
+        # Send email notification
+        await send_email(
+            subject="OBSCURA - Team Deletion Confirmation",
+            name=user["username"],  # Pass the team leader's name
+            team_name=existing_team["team_name"],  # Pass the team name
+            email=email,  # Send email to the team leader
+            template_path="/home/in-l-f3rj863/Downloads/Hari/Hari/Obscura_backend/app/registeration/DropMemberMail.html",
+        )
+
         return JSONResponse({"success": True, "message": "Team deleted successfully"}, status_code=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error while deleting team: {e}")
