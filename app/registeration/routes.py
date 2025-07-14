@@ -230,7 +230,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             name=data.username,  # Pass the user's name
             team_name=existing_team["team_name"],  # Pass the team name
             email=user["email"],  # Send email to the user joining the team
-            template_path="/app/app/registeration/TeamRegistration.html",
+            template_path="/app/app/registeration/TeamRegistration2.html",
         )
     except Exception as e:
         logger.error(f"Error while sending email: {e}")
