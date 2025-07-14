@@ -38,7 +38,7 @@ conf = ConnectionConfig(
 )
 
 
-async def send_email(name: str, team_name: str, email: str, template_path: str):
+async def send_email(name: str, team_name: str, email: str, template_path: str, subject : str):
     """
     Sends an email using the provided template and dynamic fields.
     """
@@ -50,7 +50,7 @@ async def send_email(name: str, team_name: str, email: str, template_path: str):
     html_content = template.render(name=name, team_name=team_name)
 
     message = MessageSchema(
-        subject="Team Registration Confirmation",
+        subject=subject,
         recipients=[email],
         body=html_content,
         subtype="html",
@@ -158,6 +158,7 @@ async def register_team(
         print(1)
         # Send email
         await send_email(
+            subject="OBSCURA - Team Registration Confirmation",
             name=player_name,
             team_name=team_name,
             email=user["email"],
@@ -183,27 +184,34 @@ async def register_team(
 @router.post("/join-team")
 @limiter.limit("10/minute") 
 async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_user)):
+    """
+    Allows a user to join a team.
+    Updates the database and sends an email notification to the user.
+    """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
     team_code = data.team_code
     discord_id = data.discord_id
     rollno = data.rollno
 
-    existing = await teams.find_one({"team_code": team_code})
+    # Find the team by team code
+    existing_team = await teams.find_one({"team_code": team_code})
 
-    if not existing:
+    if not existing_team:
         return JSONResponse(
             {"error": "Team code invalid or player already in team"},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    for player in existing.get("players", []):
+    # Check if the user is already in the team
+    for player in existing_team.get("players", []):
         if player["email"] == user["email"]:
             return JSONResponse(
                 {"error": "Player already in team"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
+    # Add the user to the team
     update_info = add_player(team_code, data.username, user["email"], discord_id, rollno)
     result = await teams.update_one(*update_info)
 
@@ -215,15 +223,23 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Send email
-    await send_email(
-        name=data.username,
-        team_name=existing["team_name"],
-        email=user["email"],
-        template_path="TeamRegistration.html",
-    )
+    # Send email notification
+    try:
+        await send_email(
+            subject="OBSCURA - Team Join Confirmation",
+            name=data.username,  # Pass the user's name
+            team_name=existing_team["team_name"],  # Pass the team name
+            email=user["email"],  # Send email to the user joining the team
+            template_path="/app/app/registeration/TeamRegistration.html",
+        )
+    except Exception as e:
+        logger.error(f"Error while sending email: {e}")
+        return JSONResponse(
+            {"error": "Failed to send email notification"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
-    return JSONResponse({"success": True})
+    return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
 
 
 
@@ -331,7 +347,7 @@ async def update_team_dashboard(
 async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_current_user)):
     """
     Allows a non-team leader user to leave a team.
-    Updates the database to remove the user from the team.
+    Updates the database to remove the user from the team and sends an email notification.
     """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
@@ -359,6 +375,16 @@ async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_
             {"team_code": existing_team["team_code"]},
             {"$pull": {"players": {"email": email}}}
         )
+
+        # Send email notification
+        await send_email(
+            subject="OBSCURA - Team LUpdate Notification",
+            name=data.name,  # Pass the user's name
+            team_name=existing_team["team_name"],  # Pass the team name
+            email=email,  # Send email to the user leaving the team
+            template_path="/app/app/registeration/DropMemberMail.html",
+        )
+
         return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error while removing user from team: {e}")
@@ -367,13 +393,12 @@ async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
 @router.post("/remove-from-team")
 @limiter.limit("10/minute")
 async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=Depends(get_current_user)):
     """
     Allows the team leader to remove a user from the team.
-    Updates the database to remove the specified user from the team.
+    Updates the database to remove the specified user from the team and sends an email notification.
     """
     teams: AsyncIOMotorCollection = request.app.state.teams
 
@@ -413,6 +438,16 @@ async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=D
             {"team_code": existing_team["team_code"]},
             {"$pull": {"players": {"email": email_to_remove}}}
         )
+
+        # Send email notification
+        await send_email(
+            subject="OBSCURA - Team LUpdate Notification",
+            name=user_to_remove["username"],  # Pass the user's name
+            team_name=existing_team["team_name"],  # Pass the team name
+            email=email_to_remove,  # Send email to the removed user
+            template_path="/app/app/registeration/DropMemberMail.html",
+        )
+
         return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error while removing user from team: {e}")
