@@ -378,7 +378,7 @@ async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_
 
         # Send email notification
         await send_email(
-            subject="OBSCURA - Team LUpdate Notification",
+            subject="OBSCURA - Team Update Notification",
             name=email,  # Pass the user's name
             team_name=existing_team["team_name"],  # Pass the team name
             email=email,  # Send email to the user leaving the team
