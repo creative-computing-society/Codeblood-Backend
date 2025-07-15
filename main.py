@@ -50,7 +50,14 @@ async def lifespan(app: FastAPI):
     yield
 
 # FastAPI app
-app = FastAPI(debug=True, lifespan=lifespan)
+
+app = FastAPI(
+    debug=False,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    lifespan=lifespan,
+)
 
 # Session middleware
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
