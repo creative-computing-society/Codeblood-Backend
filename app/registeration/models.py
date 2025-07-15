@@ -19,7 +19,8 @@ class RegisterTeam(BaseModel):
     @field_validator("username", "discord_id")
     @classmethod
     def validate_username_and_discord_id(cls, value):
-        if not re.match(r"^(?![.])[a-zA-Z0-9.]{2,32}(?<![._])$", value):
+        if not re.match(r"^(?![._])[a-zA-Z0-9._]{2,32}(?<![._])$"
+, value):
             raise ValueError("Invalid username or discord ID format")
         return value
 
@@ -39,7 +40,8 @@ class JoinTeam(BaseModel):
     @field_validator("username", "discord_id")
     @classmethod
     def validate_username_and_discord_id(cls, value):
-        if not re.match(r"^(?![.])[a-zA-Z0-9.]{2,32}(?<![._])$", value):
+        if not re.match(r"^(?![._])[a-zA-Z0-9._]{2,32}(?<![._])$"
+, value):
             raise ValueError("Invalid username or discord ID format")
         return value
 
