@@ -26,7 +26,7 @@ class RegisterTeam(BaseModel):
     @field_validator("rollno")  # Ensure the decorator references the correct field
     @classmethod
     def validate_rollno(cls, rollno):
-        if not re.match(r"^\d{1,12}$", rollno):
+        if not re.match(r"^\d{4,12}$", rollno):
             raise ValueError("Invalid roll number format")
         return rollno
 
@@ -46,7 +46,7 @@ class JoinTeam(BaseModel):
     @field_validator("rollno")  # Ensure the decorator references the correct field
     @classmethod
     def validate_rollno(cls, rollno):
-        if not re.match(r"^\d{1,12}$", rollno):
+        if not re.match(r"^\d{4,12}$", rollno):
             raise ValueError("Invalid roll number format")
         return rollno
 
