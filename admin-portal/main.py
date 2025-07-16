@@ -1,12 +1,16 @@
+import logging
+import os
+import uvicorn
+import asyncio
+import discord_bot  # This will start discord bot's task loop
+
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from datetime import datetime, timedelta
-import os
-import uvicorn
 
 from app.db.mongo import teams_col, users_col, mail_sent_col, db
 from app.utils.mailer import send_mail
@@ -18,6 +22,7 @@ app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
 
 def is_logged_in(request: Request):
     return request.session.get("logged_in", False)
@@ -36,7 +41,9 @@ def login_post(request: Request, uid: str = Form(...), password: str = Form(...)
     if uid == admin_uid and password == admin_pwd:
         request.session["logged_in"] = True
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"})
+    return templates.TemplateResponse(
+        "login.html", {"request": request, "error": "Invalid credentials"}
+    )
 
 
 @app.get("/logout")
@@ -48,22 +55,30 @@ def logout(request: Request):
 # ------------------- DASHBOARD -------------------
 @app.get("/dashboard")
 async def dashboard(request: Request):
-    teams = await teams_col.find().to_list(None)
+    now = datetime.now()
+
+    # Run Mongo queries in parallel
+    teams_task = teams_col.find().to_list(None)
+    users_task = users_col.find().to_list(None)
+    mails_task = mail_sent_col.find().to_list(None)
+
+    teams, all_users, mail_records = await asyncio.gather(
+        teams_task, users_task, mails_task
+    )
+
+    # Sort and filter
     recent_teams = sorted(teams, key=lambda t: t.get("_id"), reverse=True)[:5]
 
     team_counts = {i: 0 for i in range(1, 5)}
     for team in teams:
-        team_counts[len(team['players'])] += 1
+        team_counts[len(team["players"])] += 1
 
-    all_users = await users_col.find().to_list(None)
     team_user_emails = set(p["email"] for t in teams for p in t["players"])
-    users_without_teams = [u["email"] for u in all_users if u["email"] not in team_user_emails]
+    users_without_teams = [
+        u["email"] for u in all_users if u["email"] not in team_user_emails
+    ]
 
-    # Get mail history from mail_sent_col
-    mail_records = await mail_sent_col.find().to_list(None)
     mail_map = {m["team_code"]: m["last_mailed_at"] for m in mail_records}
-    now = datetime.utcnow()
-
     for team in teams:
         team["last_mailed_at"] = mail_map.get(team["team_code"])
 
@@ -75,14 +90,17 @@ async def dashboard(request: Request):
 
     teams_sorted = sorted(teams, key=sort_key)
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "team_counts": team_counts,
-        "recent_teams": recent_teams,
-        "users_without_teams": users_without_teams,
-        "all_teams": teams_sorted,
-        "now": now
-    })
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "team_counts": team_counts,
+            "recent_teams": recent_teams,
+            "users_without_teams": users_without_teams,
+            "all_teams": teams_sorted,
+            "now": now,
+        },
+    )
 
 
 # ------------------- DASHBOARD DATA (AJAX) -------------------
@@ -96,19 +114,24 @@ async def dashboard_data():
         team_counts[size] = team_counts.get(size, 0) + 1
 
     recent_teams = sorted(teams, key=lambda x: x.get("_id", 0), reverse=True)[:5]
-    recent_data = [{"team_name": t["team_name"], "team_leader_email": t["team_leader_email"]} for t in recent_teams]
+    recent_data = [
+        {"team_name": t["team_name"], "team_leader_email": t["team_leader_email"]}
+        for t in recent_teams
+    ]
 
     users = await users_col.find().to_list(None)
     users_with_teams = set(u.get("email") for u in users if u.get("team_id"))
     users_all = set(u.get("email") for u in users)
     users_without_teams = list(users_all - users_with_teams)
 
-    return JSONResponse({
-        "total_teams": len(teams),
-        "team_counts": team_counts,
-        "recent_teams": recent_data,
-        "users_without_teams": users_without_teams
-    })
+    return JSONResponse(
+        {
+            "total_teams": len(teams),
+            "team_counts": team_counts,
+            "recent_teams": recent_data,
+            "users_without_teams": users_without_teams,
+        }
+    )
 
 
 # ------------------- SEND MAIL -------------------
@@ -123,16 +146,17 @@ async def send_mail_to_team(team_code: str):
             to_email=player["email"],
             subject="⏳ Complete your team for Obscura!",
             name=player["name"],
-            team_name=team["team_name"]
+            team_name=team["team_name"],
         )
 
     await mail_sent_col.update_one(
         {"team_code": team_code},
         {"$set": {"last_mailed_at": datetime.utcnow()}},
-        upsert=True
+        upsert=True,
     )
 
     return RedirectResponse("/dashboard", status_code=302)
+
 
 # ------------------- BULK MAILING -------------------
 @app.post("/bulk-mail")
@@ -157,13 +181,13 @@ async def bulk_mail(background_tasks: BackgroundTasks):
                 to_email=player["email"],
                 subject="⏳ Complete your team for Obscura!",
                 name=player["name"],
-                team_name=team["team_name"]
+                team_name=team["team_name"],
             )
 
         await mail_sent_col.update_one(
             {"team_code": team["team_code"]},
             {"$set": {"last_mailed_at": datetime.utcnow()}},
-            upsert=True
+            upsert=True,
         )
 
     return RedirectResponse("/dashboard", status_code=302)
