@@ -1,0 +1,79 @@
+[
+  {
+    "team_code": "A1B2C3",
+    "team_name": "Team Alpha",
+    "team_leader_email": "alice1@thapar.edu",
+    "players": [
+      {
+        "player_id": "b7f16ed1-23da-52f5-999d-8b158d3bb7c4",
+        "name": "Alice",
+        "email": "alice1@thapar.edu",
+        "discord_id": "745238347349491712",
+        "rollno": "101001001",
+        "is_hacker": true,
+        "is_wizard": false
+      },
+      {
+        "player_id": "b26f8776-9a80-5fa2-83d3-90d47e49999f",
+        "name": "Bob",
+        "email": "bob2@thapar.edu",
+        "discord_id": "557856377628917770",
+        "rollno": "101001002",
+        "is_hacker": true,
+        "is_wizard": false
+      },
+      {
+        "player_id": "d85e123f-f9c1-552a-b473-44d96220f711",
+        "name": "Charlie",
+        "email": "charlie3@thapar.edu",
+        "discord_id": "1244321077379989617",
+        "rollno": "101001003",
+        "is_hacker": true,
+        "is_wizard": false
+      },
+      {
+        "player_id": "5a25c69a-4b73-5380-87da-c2452db6b7fd",
+        "name": "Diana",
+        "email": "diana4@thapar.edu",
+        "discord_id": "1272287483366735955",
+        "rollno": "101001004",
+        "is_hacker": true,
+        "is_wizard": false
+      }
+    ]
+  },
+  {
+    "team_code": "D4E5F6",
+    "team_name": "Team Beta",
+    "team_leader_email": "emma5@thapar.edu",
+    "players": [
+      {
+        "player_id": "06dba246-46e3-53e6-bc90-86c6eb354028",
+        "name": "Emma",
+        "email": "emma5@thapar.edu",
+        "discord_id": "116959686094881187",
+        "rollno": "101001005",
+        "is_hacker": true,
+        "is_wizard": false
+      },
+      {
+        "player_id": "50aa0e0e-ec93-5cd0-9866-c8aa9fba8084",
+        "name": "Frank",
+        "email": "frank6@thapar.edu",
+        "discord_id": "731143503530164374",
+        "rollno": "101001006",
+        "is_hacker": true,
+        "is_wizard": false
+      },
+      {
+        "player_id": "c0d37b8d-6d3a-5c5e-bb96-85c3beeb408a",
+        "name": "Grace",
+        "email": "grace7@thapar.edu",
+        "discord_id": "919153920826281985",
+        "rollno": "101001007",
+        "is_hacker": true,
+        "is_wizard": false
+      }
+    ]
+  }
+]

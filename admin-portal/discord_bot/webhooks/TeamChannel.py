@@ -12,15 +12,6 @@ logger = getLogger(__name__)
 
 class TeamChannels:
     def __init__(self, bot: commands.Bot) -> None:
-        """
-        While using this, just do this
-
-        ```python
-            team_channels = TeamChannels(bot)
-        ```
-
-        You need not define bot as its taking the bot from asyncio.create_tasks()
-        """
         self.bot = bot
         self._invalid_ids = []
 

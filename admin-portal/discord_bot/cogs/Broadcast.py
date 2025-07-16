@@ -11,8 +11,10 @@ logger = getLogger(__name__)
 class Broadcast(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.announcement_channel = getenv("ANNOUNCEMENT_CHANNEL")
-        self.post_url = "ask hari"
+        self.announcement_channel = int(getenv("ANNOUNCEMENT_CHANNEL"))
+        self.post_url = "http://127.0.0.1:2130/test/"
+
+        assert self.announcement_channel is not None, f"{self.announcement_channel}"
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -33,6 +35,9 @@ class Broadcast(commands.Cog):
             except Exception as e:
                 logger.error(f"Error posting message: {e}")
 
+        await self.bot.process_commands(message)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Broadcast(bot))
+    logger.info("Broadcast cog loaded")

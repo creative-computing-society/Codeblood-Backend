@@ -42,6 +42,10 @@
     "starlette": {
       "level": "WARNING",
       "propagate": false
+    },
+    "discord": {
+      "level": "INFO",
+      "propagate": false
     }
   },
   "root": {

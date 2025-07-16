@@ -3,18 +3,12 @@ from discord import app_commands
 from discord.ext import commands
 
 from typing import Optional, Type, Any
-from dotenv import load_dotenv
 from logging import getLogger
-from asyncio import create_task
 
-from .utils import COGS, DISCORD_BOT_TOKEN
+from .utils import COGS
 
-load_dotenv()
 
 logger = getLogger(__name__)
-
-if COGS is None or DISCORD_BOT_TOKEN is None:
-    raise RuntimeError("COGS/ Discord bot token is/are empty")
 
 
 class Bot(commands.Bot):
@@ -59,11 +53,11 @@ class Bot(commands.Bot):
         )
 
 
-def bot():
+def init_bot():
     intents = discord.Intents.default()
+    intents.message_content = True
     intents.members = True  # required to fetch member info
     intents.guilds = True
 
     bot = Bot(command_prefix="!", intents=intents)
-
-    create_task(bot.start(DISCORD_BOT_TOKEN))
+    return bot

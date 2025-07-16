@@ -5,7 +5,7 @@ import os
 from jinja2 import Template
 
 # Load HTML template (only once)
-TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "TeamRegisteration2.html")
+TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "TeamRegistration2.html")
 with open(TEMPLATE_PATH) as f:
     html_template = Template(f.read())
 

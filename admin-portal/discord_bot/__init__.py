@@ -1,3 +1,4 @@
-from .bot import bot
+from .bot import init_bot
+from .webhooks.TeamChannel import TeamChannels
 
-bot()
+__all__ = ["init_bot", "TeamChannels"]

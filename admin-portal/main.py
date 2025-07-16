@@ -1,8 +1,7 @@
-import logging
+import loggers
 import os
 import uvicorn
 import asyncio
-import discord_bot  # This will start discord bot's task loop
 
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -11,14 +10,43 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from datetime import datetime, timedelta
+from contextlib import asynccontextmanager
+from logging import getLogger
+from json import load
 
 from app.db.mongo import teams_col, users_col, mail_sent_col, db
 from app.utils.mailer import send_mail
+from app.routes.discord_bot import router
+from discord_bot import init_bot, TeamChannels
 
 from fastapi import BackgroundTasks
 
-app = FastAPI()
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+logger = getLogger(__name__)
+
+bot = init_bot()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async def start_bot():
+        if DISCORD_BOT_TOKEN is None:
+            raise RuntimeError("Discord bot token not found!")
+
+        await bot.start(DISCORD_BOT_TOKEN)
+
+    logger.info("Bot is up!")
+    asyncio.create_task(start_bot())
+    yield
+
+    await bot.close()
+    logger.info("Bot has been shut down")
+
+
+app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
+app.include_router(router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
@@ -191,6 +219,17 @@ async def bulk_mail(background_tasks: BackgroundTasks):
         )
 
     return RedirectResponse("/dashboard", status_code=302)
+
+
+# --------------------BOT TESTING----------------
+@app.get("/fuck")
+async def create_channels(request: Request):
+    with open("test.json") as file:
+        data = load(file)
+
+        team_channels = TeamChannels(bot)
+        await team_channels.create_channels(data)
+        logger.info(team_channels.invalid_ids)
 
 
 # ------------------- UVICORN -------------------
