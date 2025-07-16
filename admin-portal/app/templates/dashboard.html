@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="flex justify-between items-center px-6 py-4 bg-black text-white">
+        <h1 class="text-2xl font-bold">OBSCURA ADMIN DASHBOARD</h1>
+        <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Logout</a>
+    </header>
+
+    <!-- Toast Notification -->
+    {% if request.query_params.get('mailed') == 'success' %}
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-md z-50 animate-slide-in">
+        Bulk mail successfully sent!
+    </div>
+    <script>
+      setTimeout(() => document.getElementById("toast").remove(), 5000);
+    </script>
+    {% endif %}
+
+    <main class="px-6 py-6">
+
+        <section class="mb-6 text-right">
+            <form method="post" action="/bulk-mail">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                    📧 Send Bulk Reminder to Incomplete Teams
+                </button>
+            </form>
+        </section>
+
+        <section class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">Team Statistics</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {% for size, count in team_counts.items() %}
+                    <div class="bg-white rounded shadow p-4">
+                        <h3 class="text-md font-medium">Teams with {{ size }} players</h3>
+                        <p class="text-2xl font-bold">{{ count }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">Recent Teams</h2>
+            <div class="overflow-x-auto">
+            <table class="w-full bg-white rounded shadow">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2 text-left">Team Name</th>
+                        <th class="px-4 py-2 text-left">Team Leader Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in recent_teams %}
+                        <tr class="border-t">
+                            <td class="px-4 py-2">{{ team.team_name }}</td>
+                            <td class="px-4 py-2">{{ team.team_leader_email }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+        <section class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">All Teams</h2>
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto border rounded">
+            <table class="w-full bg-white">
+                <thead class="sticky top-0 bg-gray-200 z-10">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Team Name</th>
+                        <th class="px-4 py-2 text-left">Team Code</th>
+                        <th class="px-4 py-2 text-left">Players</th>
+                        <th class="px-4 py-2 text-left">Last Mailed At</th>
+                        <th class="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in all_teams %}
+                        <tr class="border-t">
+                            <td class="px-4 py-2">{{ team.team_name }}</td>
+                            <td class="px-4 py-2">{{ team.team_code }}</td>
+                            <td class="px-4 py-2">{{ team.players | length }}</td>
+                            <td class="px-4 py-2">
+                                {% if team.last_mailed_at %}
+                                    {{ team.last_mailed_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}-{% endif %}
+                            </td>
+                            <td class="px-4 py-2">
+                                {% if team.players | length < 4 %}
+                                    {% if team.last_mailed_at and (now - team.last_mailed_at).total_seconds() < 36000 %}
+                                        <span class="text-gray-400 text-sm font-medium">Mail Sent</span>
+                                    {% else %}
+                                        <a href="/send-mail/{{ team.team_code }}" class="text-white bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded">Send Mail</a>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-green-600 font-medium">Team Full</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-2">Users Without Teams</h2>
+            <ul class="list-disc list-inside bg-white rounded shadow p-4">
+                {% for user in users_without_teams %}
+                    <li>{{ user }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
