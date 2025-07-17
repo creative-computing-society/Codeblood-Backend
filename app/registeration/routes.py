@@ -15,7 +15,7 @@ from os import getenv
 from fastapi.responses import JSONResponse  
 from starlette import status  
 from app.utils.jwt import verify_jwt
-
+import re
 from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, LeaveTeamRequest, RemoveFromTeamRequest
 
 router = APIRouter()
@@ -497,5 +497,77 @@ async def delete_team(request: Request, user=Depends(get_current_user)):
         logger.error(f"Error while deleting team: {e}")
         return JSONResponse(
             {"error": "Failed to delete the team"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+
+@router.put("/change_discord")
+@limiter.limit("15/minute")
+async def change_discord(request: Request):
+    """
+    Updates the Discord ID of a user in the team database.
+    """
+    # Extract new Discord ID from the request body
+    body = await request.json()
+    new_discord_id = body.get("discord_id")
+    if not new_discord_id:
+        return JSONResponse(
+            {"error": "Discord ID is required"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate the format of the Discord ID
+    if not re.match(r"^(?![._])[a-zA-Z0-9._]{2,32}(?<![._])$", new_discord_id):
+        return JSONResponse(
+            {"error": "Invalid Discord ID format"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Retrieve email from session cookie
+    token = request.cookies.get("session_token")
+    if not token:
+        return JSONResponse(
+            {"error": "Unauthorized. No session token found."},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    payload = verify_jwt(token)
+    if not payload:
+        return JSONResponse(
+            {"error": "Invalid session token"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    email = payload.get("email")
+    if not email:
+        return JSONResponse(
+            {"error": "Email not found in session token"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Locate the user in the team database
+    teams: AsyncIOMotorCollection = request.app.state.teams
+    existing_team = await teams.find_one({"players.email": email})
+    if not existing_team:
+        return JSONResponse(
+            {"error": "User not found in any team"},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Update the Discord ID
+    try:
+        await teams.update_one(
+            {"players.email": email},
+            {"$set": {"players.$.discord_id": new_discord_id}},
+        )
+        return JSONResponse(
+            {"success": True, "message": "Discord ID updated successfully"},
+            status_code=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        logger.error(f"Error while updating Discord ID: {e}")
+        return JSONResponse(
+            {"error": "Failed to update Discord ID"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
