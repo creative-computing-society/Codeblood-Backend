@@ -121,9 +121,10 @@ async def send_mail_to_team(team_code: str):
     for player in team["players"]:
         send_mail(
             to_email=player["email"],
-            subject="⏳ Complete your team for Obscura!",
+            subject="Complete Your Team for Obscura!",
             name=player["name"],
-            team_name=team["team_name"]
+            team_name=team["team_name"],
+            team_code=team_code  # Pass the team_code here
         )
 
     await mail_sent_col.update_one(
@@ -133,7 +134,6 @@ async def send_mail_to_team(team_code: str):
     )
 
     return RedirectResponse("/dashboard", status_code=302)
-
 # ------------------- BULK MAILING -------------------
 @app.post("/bulk-mail")
 async def bulk_mail(background_tasks: BackgroundTasks):
@@ -149,15 +149,16 @@ async def bulk_mail(background_tasks: BackgroundTasks):
 
         last_mailed = mail_map.get(team["team_code"])
         if last_mailed and now - last_mailed < timedelta(hours=10):
-            continue  # skip if mailed recently
+            continue  # Skip if mailed recently
 
         for player in team["players"]:
             background_tasks.add_task(
                 send_mail,
                 to_email=player["email"],
-                subject="⏳ Complete your team for Obscura!",
+                subject="Complete your Team for Obscura!",
                 name=player["name"],
-                team_name=team["team_name"]
+                team_name=team["team_name"],
+                team_code=team["team_code"]  # Pass the team_code here
             )
 
         await mail_sent_col.update_one(
@@ -167,7 +168,6 @@ async def bulk_mail(background_tasks: BackgroundTasks):
         )
 
     return RedirectResponse("/dashboard", status_code=302)
-
 
 # ------------------- UVICORN -------------------
 if __name__ == "__main__":

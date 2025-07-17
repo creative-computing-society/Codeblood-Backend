@@ -4,22 +4,28 @@ from email.mime.text import MIMEText
 import os
 from jinja2 import Template
 
-# Load HTML template (only once)
-with open("/home/in-l-f3rj863/Downloads/Hari/Hari/Obscura_backend/admin-portal/app/utils/TeamRegistration2.html", "r") as f:
-    html_template = Template(f.read())
+# Dynamically construct the absolute path
+file_path = os.path.join(os.getcwd(), "app", "utils", "TEAMCOMPLETE.html")
 
+# Load HTML template (only once)
+with open(file_path, "r") as f:
+    html_template = Template(f.read())
+    
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_FROM = os.getenv("MAIL_FROM")
 
-
-def send_mail(to_email, subject, name, team_name):
+def send_mail(to_email, subject, name, team_name, team_code):
+    """
+    Sends an email using the provided template and dynamic fields.
+    """
     msg = MIMEMultipart('alternative')
     msg['From'] = MAIL_FROM
     msg['To'] = to_email
     msg['Subject'] = subject
 
-    html_body = html_template.render(name=name, team_name=team_name)
+    # Render the HTML body with the new team_code field
+    html_body = html_template.render(name=name, team_name=team_name, team_code=team_code)
 
     msg.attach(MIMEText(html_body, 'html'))
 
