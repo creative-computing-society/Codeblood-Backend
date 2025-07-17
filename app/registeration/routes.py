@@ -571,3 +571,73 @@ async def change_discord(request: Request):
             {"error": "Failed to update Discord ID"},
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+@router.put("/change_team_name")
+@limiter.limit("15/minute")
+async def change_team_name(request: Request):
+    """
+    Updates the team name for the team in the database.
+    """
+    # Extract new team name from the request body
+    body = await request.json()
+    new_team_name = body.get("new_team_name")
+    if not new_team_name:
+        return JSONResponse(
+            {"error": "New team name is required"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate the new team name using the provided validation logic
+    if not re.match(r"^[\w ]{1,20}$", new_team_name):
+        return JSONResponse(
+            {"error": "Invalid team name format"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Retrieve email from session cookie
+    token = request.cookies.get("session_token")
+    if not token:
+        return JSONResponse(
+            {"error": "Unauthorized. No session token found."},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    payload = verify_jwt(token)
+    if not payload:
+        return JSONResponse(
+            {"error": "Invalid session token"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    email = payload.get("email")
+    if not email:
+        return JSONResponse(
+            {"error": "Email not found in session token"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Locate the user's team in the database
+    teams: AsyncIOMotorCollection = request.app.state.teams
+    existing_team = await teams.find_one({"players.email": email})
+    if not existing_team:
+        return JSONResponse(
+            {"error": "User not found in any team"},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Update the team name
+    try:
+        await teams.update_one(
+            {"team_code": existing_team["team_code"]},
+            {"$set": {"team_name": new_team_name}},
+        )
+        return JSONResponse(
+            {"success": True, "message": "Team name updated successfully"},
+            status_code=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        logger.error(f"Error while updating team name: {e}")
+        return JSONResponse(
+            {"error": "Failed to update team name"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
