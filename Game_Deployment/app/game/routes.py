@@ -8,10 +8,18 @@ from datetime import datetime
 import json
 from app.limitting import limiter
 from app.utils.auth import verify_cookie
-
+import os
 game_router = APIRouter()
+from pathlib import Path
 
-with open("questions.json", "r") as f:
+
+current_dir = Path(__file__).parent
+
+
+questions_path = current_dir / "questions.json"
+
+
+with open(questions_path, "r") as f:
     QUESTIONS = json.load(f)
 
 @game_router.post("/set_lobby")
