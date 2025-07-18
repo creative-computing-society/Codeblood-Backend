@@ -7,29 +7,18 @@ from uuid import uuid4
 from datetime import datetime
 import json
 from app.limitting import limiter
+from app.utils.auth import verify_cookie
 
 game_router = APIRouter()
 
 @game_router.post("/set_lobby")
 @limiter.limit("10/minute")
-async def set_lobby(request: Request):
-    token = request.cookies.get("session_token")
-    if not token:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    payload = verify_jwt(token)
-    email = payload.get("email")
-    if not email:
-        return JSONResponse({"error": "Invalid session token"}, status_code=400)
-
-    # Check if the player exists in the teams collection
+async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     team = await teams.find_one({"players.email": email})
     if not team:
         return JSONResponse({"error": "Player Not Registered"}, status_code=404)
 
     team_code = team["team_code"]
-
-    # Check if the team exists in the lobbies collection
     lobby = await lobbies.find_one({"team_code": team_code})
     if not lobby:
         lobby_id = str(uuid4())[:8]
@@ -39,16 +28,15 @@ async def set_lobby(request: Request):
             "players": team["players"]
         }
         await lobbies.insert_one(lobby_data)
-        lobby = Lobby(**lobby_data)  # Validate and structure using Pydantic
+        lobby = Lobby(**lobby_data)
     else:
-        lobby = Lobby(**lobby)  # Validate existing lobby data
+        lobby = Lobby(**lobby)
 
     return JSONResponse(lobby.dict())
 
 @game_router.post("/check_answer")
 @limiter.limit("15/minute")
-async def check_answer(question_id: str, answer: str, team_id: str):
-    # Load the local JSON file with questions and answers
+async def check_answer(request: Request, question_id: str, answer: str, team_id: str, email: str = Depends(verify_cookie)):
     with open("questions.json", "r") as f:
         questions = json.load(f)
 
@@ -66,8 +54,8 @@ async def check_answer(question_id: str, answer: str, team_id: str):
         return JSONResponse({"message": "Wrong answer!"})
 
 @game_router.post("/team_status_update")
-@limiter.limit("10/minute") 
-async def team_status_update(level_number: int, action: str, team_id: str):
+@limiter.limit("10/minute")
+async def team_status_update(request: Request, level_number: int, action: str, team_id: str, email: str = Depends(verify_cookie)):
     now = datetime.utcnow()
     if action == "entered":
         await points.update_one(
@@ -87,7 +75,7 @@ async def team_status_update(level_number: int, action: str, team_id: str):
 
 @game_router.post("/individual_status_update")
 @limiter.limit("10/minute")
-async def individual_status_update(username: str, level: int, checkpoint: int):
+async def individual_status_update(request: Request, username: str, level: int, checkpoint: int, email: str = Depends(verify_cookie)):
     await players.update_one(
         {"user_name": username},
         {"$set": {f"Status.{level}": checkpoint}}
@@ -96,10 +84,10 @@ async def individual_status_update(username: str, level: int, checkpoint: int):
 
 @game_router.get("/leaderboard")
 @limiter.limit("5/minute")
-async def leaderboard():
+async def leaderboard(request: Request, email: str = Depends(verify_cookie)):
     teams_data = await points.find().to_list(None)
     leaderboard = sorted(
-        [Points(**team) for team in teams_data],  # Validate and structure using Pydantic
+        [Points(**team) for team in teams_data],
         key=lambda x: (-x.Points, x.Total_Time_To_Clear_Levels, -x.Levels_Cleared)
     )
     return JSONResponse([team.dict() for team in leaderboard])
