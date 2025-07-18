@@ -5,12 +5,15 @@ from datetime import datetime
 class Player(BaseModel):
     user_name: str
     team_code: str
-    Status: List[int] = Field(..., min_items=7, max_items=7)  # 7 levels, each with a status
+    email: EmailStr 
+    is_hacker: bool = False  
+    is_wizard: bool = False  
+    Status: List[int] = Field(..., min_items=6, max_items=6) 
 
 class Lobby(BaseModel):
     lobby_id: str
     team_code: str
-    players: List[dict]  # Each player is a dictionary with player details
+    players: List[Player]  # Update to use the Player model for consistency
 
 class Points(BaseModel):
     team_code: str

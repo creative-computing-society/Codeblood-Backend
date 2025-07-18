@@ -11,12 +11,24 @@ from app.utils.auth import verify_cookie
 
 game_router = APIRouter()
 
+with open("questions.json", "r") as f:
+    QUESTIONS = json.load(f)
+
 @game_router.post("/set_lobby")
 @limiter.limit("10/minute")
 async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     team = await teams.find_one({"players.email": email})
     if not team:
         return JSONResponse({"error": "Player Not Registered"}, status_code=404)
+
+    player_data = next(
+        (player for player in team["players"] if player["email"] == email), None
+    )
+    if not player_data:
+        return JSONResponse({"error": "Player not found in the team"}, status_code=404)
+
+    player_data["is_hacker"] = player_data.get("is_hacker", False)
+    player_data["is_wizard"] = player_data.get("is_wizard", False)
 
     team_code = team["team_code"]
     lobby = await lobbies.find_one({"team_code": team_code})
@@ -25,22 +37,24 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
         lobby_data = {
             "lobby_id": lobby_id,
             "team_code": team_code,
-            "players": team["players"]
+            "players": team["players"],  
         }
         await lobbies.insert_one(lobby_data)
-        lobby = Lobby(**lobby_data)
-    else:
-        lobby = Lobby(**lobby)
+        lobby = lobby_data
 
-    return JSONResponse(lobby.dict())
+    response_data = {
+        "lobby_id": lobby["lobby_id"],
+        "team_code": team_code,
+        "player": player_data,  # Only the logged-in user's data
+    }
+
+    return JSONResponse(response_data)
+
 
 @game_router.post("/check_answer")
 @limiter.limit("15/minute")
 async def check_answer(request: Request, question_id: str, answer: str, team_id: str, email: str = Depends(verify_cookie)):
-    with open("questions.json", "r") as f:
-        questions = json.load(f)
-
-    question = questions.get(question_id)
+    question = QUESTIONS.get(question_id)
     if not question:
         return JSONResponse({"error": "Invalid question ID"}, status_code=400)
 
