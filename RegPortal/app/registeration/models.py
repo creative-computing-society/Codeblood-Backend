@@ -19,9 +19,10 @@ class RegisterTeam(BaseModel):
     @field_validator("username", "discord_id")
     @classmethod
     def validate_username_and_discord_id(cls, value):
-        if not re.match(r"^(?![._])[a-zA-Z0-9._]{2,32}(?<![._])$"
-, value):
-            raise ValueError("Invalid username or discord ID format")
+        if not re.match(r"^[a-zA-Z0-9._]{2,32}$", value):
+            raise ValueError(
+                "Invalid Discord username. Use 2–32 characters (letters, numbers, dots, underscores)."
+            )
         return value
 
     @field_validator("rollno")  # Ensure the decorator references the correct field
@@ -40,9 +41,10 @@ class JoinTeam(BaseModel):
     @field_validator("username", "discord_id")
     @classmethod
     def validate_username_and_discord_id(cls, value):
-        if not re.match(r"^(?![._])[a-zA-Z0-9._]{2,32}(?<![._])$"
-, value):
-            raise ValueError("Invalid username or discord ID format")
+        if not re.match(r"^[a-zA-Z0-9._]{2,32}$", value):
+            raise ValueError(
+                "Invalid Discord username. Use 2–32 characters (letters, numbers, dots, underscores)."
+            )
         return value
 
     @field_validator("rollno")  # Ensure the decorator references the correct field

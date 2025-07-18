@@ -518,7 +518,7 @@ async def change_discord(request: Request):
         )
 
     # Validate the format of the Discord ID
-    if not re.match(r"^(?![._])[a-zA-Z0-9._]{2,32}(?<![._])$", new_discord_id):
+    if not re.match(r"^[a-zA-Z0-9._]{2,32}$", new_discord_id):
         return JSONResponse(
             {"error": "Invalid Discord ID format"},
             status_code=status.HTTP_400_BAD_REQUEST,
