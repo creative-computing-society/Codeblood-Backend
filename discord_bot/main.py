@@ -5,7 +5,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import asyncio
 import aiosqlite
 from typing import Optional, Type, Any
 from logging import getLogger
@@ -49,6 +48,10 @@ class Bot(commands.Bot):
                 logger.error(f"Error loading extension {extension}: {e}")
 
     async def on_ready(self):
+        from views.TeamChannel import TeamChannelButton
+
+        self.add_view(TeamChannelButton())
+
         logger.info("Bot is Up and ready!")
         try:
             synced = await self.tree.sync()

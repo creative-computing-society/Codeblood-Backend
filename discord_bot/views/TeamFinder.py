@@ -28,8 +28,9 @@ class LookingForTeamView(discord.ui.View):
             return
 
         if interaction.user.id != self.player_id:
+            embed = create_failure_embed("This isn't your LFT panel.")
             await interaction.response.send_message(
-                "This isn't your LFT panel.", ephemeral=True
+                embed=embed, ephemeral=True, delete_after=10
             )
             return
 
@@ -126,13 +127,15 @@ class LookingForTeamView(discord.ui.View):
             new_player_role = self.selected_role
             if new_player_role == "hacker" and hacker_count >= 2:
                 await btn_interaction.response.send_message(
-                    "Your team already has 2 hackers.", ephemeral=True
+                    embed=create_failure_embed("Your team already has 2 hackers."),
+                    ephemeral=True,
                 )
                 return
 
             if new_player_role == "wizard" and wizard_count >= 2:
                 await btn_interaction.response.send_message(
-                    "Your team already has 2 wizards.", ephemeral=True
+                    embed=create_failure_embed("Your team already has 2 wizards."),
+                    ephemeral=True,
                 )
                 return
 
@@ -144,7 +147,9 @@ class LookingForTeamView(discord.ui.View):
             await teams.delete_one({"_id": lookers_team["_id"]})
 
             await btn_interaction.response.send_message(
-                f"{interaction.user.mention} has been added to the team by {btn_interaction.user.mention}!",
+                embed=create_success_embed(
+                    f"{interaction.user.mention} has been added to the team by {btn_interaction.user.mention}!"
+                ),
                 ephemeral=False,
             )
 
@@ -156,6 +161,8 @@ class LookingForTeamView(discord.ui.View):
         await interaction.channel.send(embed=embed, view=view)
 
         await interaction.response.send_message(
-            f"You've been marked as LFT as a {self.selected_role.capitalize()}!",
+            embed=create_success_embed(
+                f"You've been marked as LFT as a {self.selected_role.capitalize()}!"
+            ),
             ephemeral=True,
         )

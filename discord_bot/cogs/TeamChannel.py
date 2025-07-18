@@ -1,4 +1,4 @@
-from os import getenv
+from os import getenv, path
 import discord
 from discord.abc import PrivateChannel
 from discord.ext import commands, tasks
@@ -14,6 +14,8 @@ logger = getLogger(__name__)
 
 CATEGORY_NAME = "OBSCURA"
 ADMIN_ROLE = getenv("ADMIN_ROLE")
+
+logo = discord.File(path.join("assets", "logo.png"), filename="logo.png")
 
 assert teams is not None, "Teams collection not found!"
 assert ADMIN_ROLE is not None, "Admin role not found!"
@@ -183,7 +185,9 @@ class TeamChannels(commands.Cog):
 
         if not channel:
             category = discord.utils.get(guild.categories, name=CATEGORY_NAME)
-            channel = await guild.create_text_channel(CATEGORY_NAME, category=category)
+            channel = await guild.create_text_channel(
+                "🚀・join-team-channel", category=category
+            )
 
         if isinstance(
             channel, (discord.ForumChannel, PrivateChannel, discord.CategoryChannel)
@@ -193,15 +197,15 @@ class TeamChannels(commands.Cog):
 
         embed = discord.Embed(
             title="Welcome to Obscura!",
-            description="To participate in the event, you need to join your team on Discord. You will be assigned a role to access your team's channels. Click the button below to join your team.\n\n"
+            description="To participate in the event, you need to join your team on Discord. You will be assignedto your team's voice channels. Click the button below to join your team.\n\n"
             + "Kindly ensure that your Discord username matches the one you provided during registration. Use the designated channels for all event-related communication. For any issues or assistance, feel free to contact any team officials. We hope you have an incredible experience! Have adventurous gameplay!",
             colour=discord.Color.red(),
         )
 
-        embed.set_thumbnail(url="https://syrinx.ccstiet.com/logo.png")
+        embed.set_thumbnail(url="attachment://logo.png")
         embed.set_footer(text="Contact Core if you have any issues.")
 
-        await channel.send(embed=embed, view=TeamChannelButton())
+        await channel.send(embed=embed, view=TeamChannelButton(), file=logo)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):

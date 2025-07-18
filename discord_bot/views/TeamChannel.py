@@ -29,16 +29,6 @@ class TeamChannelButton(discord.ui.View):
 
         guild = interaction.guild
 
-        reg_view = discord.ui.View()
-        reg_view.add_item(
-            discord.ui.Button(
-                style=discord.ButtonStyle.link,
-                label="Register Now",
-                emoji="🔗",
-                url="https://obscura.ccstiet.com/",
-            )
-        )
-
         team: Dict[str, Any] | None = await teams.find_one(
             {
                 "$or": [
