@@ -46,7 +46,7 @@ oauth.register(
 @router.get("/login")
 @limiter.limit("8/minute") 
 async def login(request: Request):
-    redirect_uri = "https://testing.ccstiet.com/auth"
+    redirect_uri = "http://testing.ccstiet.com/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
