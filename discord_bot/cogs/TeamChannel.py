@@ -1,18 +1,22 @@
+from os import getenv
 import discord
-from discord import Role, Member, PermissionOverwrite
 from discord.abc import PrivateChannel
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import asyncio
-from typing import Any, Dict, Mapping, Union, Optional
+from typing import Any, Dict, Mapping
 from logging import getLogger
 
 from database import teams
+from views import TeamChannelButton
 
 logger = getLogger(__name__)
+
 CATEGORY_NAME = "OBSCURA"
+ADMIN_ROLE = getenv("ADMIN_ROLE")
 
 assert teams is not None, "Teams collection not found!"
+assert ADMIN_ROLE is not None, "Admin role not found!"
 
 
 class TeamChannels(commands.Cog):
@@ -20,10 +24,13 @@ class TeamChannels(commands.Cog):
         self.bot = bot
         self.channel_id = 1395448700985413642
         self._invalid_ids = []
+        self._not_in_guild = []
         self._creating = False
 
         self.bot.add_view(TeamChannelButton())
         asyncio.create_task(self._startup_send())
+
+        self.auto_channel_creation.start()
 
     @property
     def invalid_ids(self):
@@ -33,16 +40,93 @@ class TeamChannels(commands.Cog):
 
         return self._invalid_ids
 
+    @property
+    def not_in_guild(self):
+        return self._not_in_guild
+
+    async def cog_unload(self):
+        self.auto_channel_creation.cancel()
+
+    # Creates the "Welcome to Obscura" message
     async def _startup_send(self) -> None:
-        # 1) don’t do anything until discord.py has populated cache
         await self.bot.wait_until_ready()
 
-        # 2) run your actual send_event_message, catching errors
         try:
             await self.send_event_message()
         except Exception:
             logger.exception("Error in send_event_message")
 
+    @tasks.loop(minutes=15)
+    async def auto_channel_creation(self):
+        if self._creating:
+            return
+
+        self._creating = True
+        await self.bot.wait_until_ready()
+
+        guild = self.bot.guilds[0]
+        all_teams = await teams.find({}).to_list(length=None)
+
+        if not all_teams:
+            logger.warning("No teams found in DB.")
+            self._creating = False
+            return
+
+        for team in all_teams:
+            await self._create_voice_channel(team, guild)
+            await asyncio.sleep(1.5)
+
+        logger.info("Voice channel sync complete.")
+        self._creating = False
+
+    # Get's each players discord id from db and edit perms accordingly
+    async def resolve_player(self, player: Dict[str, Any], guild: discord.Guild):
+        raw_id = player.get("discord_id", "").strip()
+        member = None
+
+        try:
+            # Discord id is in the form of int, can use to check if id is valid or not
+            if raw_id.isdigit():
+                member_id = int(raw_id)
+
+                member = guild.get_member(member_id)
+                if not member:
+                    try:
+                        member = await guild.fetch_member(member_id)
+                    except discord.NotFound:
+                        self._not_in_guild.append(raw_id)
+                        return None
+
+            else:
+                # Discord id is a string, cannot use to check if id is valid or not
+                username_input = raw_id.lower()
+                member = next(
+                    (
+                        m
+                        for m in guild.members
+                        if m.name.lower() == username_input
+                        or (m.global_name and m.global_name.lower() == username_input)
+                    ),
+                    None,
+                )
+                if not member:
+                    self._invalid_ids.append(raw_id)
+                    return None
+
+            # Final check: validate user exists
+            try:
+                await self.bot.fetch_user(member.id)
+            except discord.NotFound:
+                self._invalid_ids.append(raw_id)
+                return None
+
+            return member
+
+        except (discord.HTTPException, ValueError, TypeError) as e:
+            self._invalid_ids.append(raw_id)
+            return None
+
+    # Creates the voice channels and edit's their permission
     async def _create_voice_channel(self, team: Dict[str, Any], guild: discord.Guild):
         overwrites: Mapping[Any, discord.PermissionOverwrite] = {
             guild.default_role: discord.PermissionOverwrite(
@@ -53,55 +137,12 @@ class TeamChannels(commands.Cog):
         team_name = team["team_name"]
         players = team["players"]
 
-        async def resolve_player(player: Dict[str, Any]):
-            raw_id = player.get("discord_id", "").strip()
-            member = None
+        # Gets the members in parallel cause I love async coding
+        resolved_members = await asyncio.gather(
+            *[self.resolve_player(p, guild) for p in players]
+        )
 
-            try:
-                if raw_id.isdigit():
-                    member_id = int(raw_id)
-
-                    member = guild.get_member(member_id)
-                    if not member:
-                        try:
-                            member = await guild.fetch_member(member_id)
-                        except discord.NotFound:
-                            self._invalid_ids.append(raw_id)
-                            return None
-
-                else:
-                    username_input = raw_id.lower()
-                    member = next(
-                        (
-                            m
-                            for m in guild.members
-                            if m.name.lower() == username_input
-                            or (
-                                m.global_name
-                                and m.global_name.lower() == username_input
-                            )
-                        ),
-                        None,
-                    )
-                    if not member:
-                        self._invalid_ids.append(raw_id)
-                        return None
-
-                # Final check: validate user exists
-                try:
-                    await self.bot.fetch_user(member.id)
-                except discord.NotFound:
-                    self._invalid_ids.append(raw_id)
-                    return None
-
-                return member
-
-            except (discord.HTTPException, ValueError, TypeError) as e:
-                self._invalid_ids.append(raw_id)
-                return None
-
-        resolved_members = await asyncio.gather(*[resolve_player(p) for p in players])
-
+        # Makes the overwrites according to each memeber
         for member in filter(None, resolved_members):
             overwrites[member] = discord.PermissionOverwrite(
                 view_channel=True, connect=True
@@ -118,6 +159,12 @@ class TeamChannels(commands.Cog):
                     )
                 },
             )
+
+        # ❗ Check if voice channel already exists
+        existing_channel = discord.utils.get(category.voice_channels, name=team_name)
+
+        if existing_channel:
+            return
 
         await guild.create_voice_channel(
             name=team_name, category=category, overwrites=overwrites
@@ -145,7 +192,7 @@ class TeamChannels(commands.Cog):
             return
 
         embed = discord.Embed(
-            title="Welcome to Syrinx! Pixels In Pursuit",
+            title="Welcome to Obscura!",
             description="To participate in the event, you need to join your team on Discord. You will be assigned a role to access your team's channels. Click the button below to join your team.\n\n"
             + "Kindly ensure that your Discord username matches the one you provided during registration. Use the designated channels for all event-related communication. For any issues or assistance, feel free to contact any team officials. We hope you have an incredible experience! Have adventurous gameplay!",
             colour=discord.Color.red(),
@@ -184,7 +231,7 @@ class TeamChannels(commands.Cog):
             await voice_channel.set_permissions(member, overwrite=overwrite)
 
     @commands.hybrid_command(name="create-vcs")
-    @commands.has_role("CORE")
+    @commands.has_role(ADMIN_ROLE)
     async def create_channels(self, ctx: commands.Context):
         """
         Just pass the entire teams collection to this
@@ -219,97 +266,21 @@ class TeamChannels(commands.Cog):
             # Sleep to reset rate limit of discord
             await asyncio.sleep(1.5)
 
-        reply_text = "Created voice channels, DM-ing you the invalid IDs"
-        dm_text = " ".join(self._invalid_ids)
+        reply_text = "Created voice channels, Here are the invalid IDs and the people who did not join this fucking discord server and made my blood boil"
+        invalid_id_text = "\n".join(self._invalid_ids)
+        not_in_guild_id_text = "\n".join(self._not_in_guild)
 
         if ctx.interaction:
             await ctx.interaction.followup.send(reply_text, ephemeral=True)
-            await ctx.interaction.followup.send(dm_text, ephemeral=True)
+            await ctx.interaction.followup.send(invalid_id_text, ephemeral=True)
+            await ctx.interaction.followup.send(not_in_guild_id_text, ephemeral=True)
+
         else:
             await ctx.reply(reply_text, ephemeral=True)
-            await ctx.author.send(dm_text)
+            await ctx.author.send(invalid_id_text)
+            await ctx.author.send(not_in_guild_id_text)
+
         self._creating = False
-
-
-class TeamChannelButton(discord.ui.View):
-    def __init__(self, *, timeout: Optional[float] = 180):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(
-        custom_id="click_button",
-        label="Click here",
-        style=discord.ButtonStyle.primary,
-        emoji="🏳️",
-    )
-    async def on_click(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        if not interaction.guild:
-            return
-
-        guild = interaction.guild
-
-        reg_view = discord.ui.View()
-        reg_view.add_item(
-            discord.ui.Button(
-                style=discord.ButtonStyle.link,
-                label="Register Now",
-                emoji="🔗",
-                url="https://syrinx.ccstiet.com/",
-            )
-        )
-
-        team: Dict[str, Any] | None = await teams.find_one(
-            {
-                "%or": [
-                    {"players.discord_id": interaction.user.name.strip()},
-                    {"players.discord_id": str(interaction.user.id)},
-                ]
-            }
-        )
-
-        if not team:
-            await interaction.response.send_message(
-                "Team information not found! Please make sure to register yourself for OBSCURA from the OBSCURA portal",
-                ephemeral=True,
-            )
-            return
-
-        voice_channel = discord.utils.get(
-            interaction.guild.voice_channels, name=team["team_name"]
-        )
-
-        if not voice_channel:
-            overwrites: Dict[
-                Union[Role, Member, discord.Object], PermissionOverwrite
-            ] = {
-                interaction.guild.default_role: PermissionOverwrite(view_channel=False),
-            }
-
-            # Gets the Obscura category
-            category = discord.utils.get(guild.categories, name="Obscura")
-
-            if category is None:
-                category_overwrites: Dict[
-                    Union[Role, Member, discord.Object], PermissionOverwrite
-                ] = {
-                    guild.default_role: PermissionOverwrite(
-                        view_channel=False, connect=False
-                    ),
-                }
-                await guild.create_category(
-                    name="Obscura", overwrites=category_overwrites
-                )
-
-            # Creates a voice channel
-            await guild.create_voice_channel(
-                name=team["team_name"], category=category, overwrites=overwrites
-            )
-
-        await interaction.response.send_message(
-            f"You have been added to team: {team['team_name']}. Please use this as your mode of communication.",
-            ephemeral=True,
-        )
 
 
 async def setup(bot: commands.Bot):

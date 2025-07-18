@@ -1,65 +1,14 @@
 import discord
 from discord.ext import commands
 
+from database import teams
+from views import LookingForTeamView
 
-class LookingForTeamView(discord.ui.View):
-    def __init__(self, player_id):
-        super().__init__()
-        self.player_id = player_id
-        self.selected_role = None
+import aiosqlite
+from logging import getLogger
 
-    @discord.ui.select(
-        placeholder="Which role are you going to play?",
-        options=[
-            discord.SelectOption(label="💻 Hacker", value="hacker"),
-            discord.SelectOption(label="🧙 Wizard", value="wizard"),
-        ],
-    )
-    async def select_role(
-        self, interaction: discord.Interaction, select: discord.ui.Select
-    ):
-        if interaction.user.id != self.player_id:
-            await interaction.response.send_message(
-                "This isn't your LFT panel.", ephemeral=True
-            )
-            return
-
-        self.selected_role = select.values[0]
-
-        # Create embed
-        embed = discord.Embed(
-            title="Player Looking for Team",
-            description=f"{interaction.user.mention} is looking for a team as `{self.selected_role.capitalize()}`",
-            color=discord.Color.green(),
-        )
-
-        # Add Accept Button
-        accept_button = discord.ui.Button(
-            label="Invite to Team", style=discord.ButtonStyle.success
-        )
-
-        async def accept_callback(btn_interaction: discord.Interaction):
-            if btn_interaction.user.id == self.player_id:
-                await btn_interaction.response.send_message(
-                    "You can't invite yourself to your own team!", ephemeral=True
-                )
-                return
-
-            await btn_interaction.response.send_message(
-                f"{btn_interaction.user.mention} has invited {interaction.user.mention} to their team!",
-                ephemeral=False,
-            )
-
-        accept_button.callback = accept_callback
-
-        # Send embed with button
-        view = discord.ui.View()
-        view.add_item(accept_button)
-        await interaction.channel.send(embed=embed, view=view)
-        await interaction.response.send_message(
-            f"You've been marked as LFT as a {self.selected_role.capitalize()}!",
-            ephemeral=True,
-        )
+logger = getLogger(__name__)
+assert teams is not None, "Teams collection is None!"
 
 
 class TeamFinder(commands.Cog):
@@ -68,7 +17,25 @@ class TeamFinder(commands.Cog):
 
     @commands.hybrid_command("team-finder")
     async def lft(self, ctx):
-        """Mark yourself as Looking For Team (LFT)"""
+        async with aiosqlite.connect("lft.db") as db:
+            cursor = await db.execute(
+                "SELECT 1 FROM lft_users WHERE discord_id = ?", (ctx.author.id,)
+            )
+            exists = await cursor.fetchone()
+
+            if exists:
+                embed = discord.Embed(
+                    color=discord.Color.red(),
+                    description="You're already marked as Looking For Team!",
+                ).set_footer(text="Contact CORE if this is a mistake!")
+                await ctx.send(embed=embed, ephemeral=True)
+                return
+
+            await db.execute(
+                "INSERT INTO lft_users (discord_id) VALUES (?)", (ctx.author.id,)
+            )
+            await db.commit()
+
         view = LookingForTeamView(ctx.author.id)
         await ctx.send("Select your role:", view=view, ephemeral=True)
 

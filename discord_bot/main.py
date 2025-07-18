@@ -5,6 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import asyncio
+import aiosqlite
 from typing import Optional, Type, Any
 from logging import getLogger
 
@@ -19,6 +21,7 @@ class Bot(commands.Bot):
         self,
         command_prefix,
         *,
+        help_command: Optional[commands.HelpCommand] = None,
         tree_cls: Type[app_commands.CommandTree[Any]] = app_commands.CommandTree,
         description: Optional[str] = None,
         intents: discord.Intents,
@@ -26,6 +29,7 @@ class Bot(commands.Bot):
     ) -> None:
         super().__init__(
             command_prefix,
+            help_command=help_command,
             tree_cls=tree_cls,
             description=description,
             intents=intents,
@@ -53,10 +57,17 @@ class Bot(commands.Bot):
         except Exception as e:
             logger.error(e)
 
-        await self.change_presence(
-            activity=discord.Game(name="Hypixel API shitting"),
-            status=discord.Status.dnd,
-        )
+        await setup_lft_db()
+
+
+async def setup_lft_db():
+    async with aiosqlite.connect("lft.db") as db:
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS lft_users (
+                discord_id INTEGER PRIMARY KEY
+            )
+        """)
+        await db.commit()
 
 
 def init_bot():
@@ -65,7 +76,7 @@ def init_bot():
     intents.members = True  # required to fetch member info
     intents.guilds = True
 
-    bot = Bot(command_prefix="!", intents=intents)
+    bot = Bot(command_prefix="!", intents=intents, help_command=None)
 
     assert DISCORD_API_TOKEN is not None, "Missing Discord bot token!"
     bot.run(DISCORD_API_TOKEN)

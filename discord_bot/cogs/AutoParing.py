@@ -1,11 +1,18 @@
+from os import getenv
+import discord
 from discord.ext import commands
 
 import asyncio
 from logging import getLogger
+
 from database import teams
+from views import ConfirmView
 
 logger = getLogger(__name__)
+ADMIN_ROLE = getenv("ADMIN_ROLE")
+
 assert teams is not None, "Teams collection is None!"
+assert ADMIN_ROLE is not None, "Admin role not found!"
 
 
 class AutoPairing(commands.Cog):
@@ -13,6 +20,7 @@ class AutoPairing(commands.Cog):
         self.bot = bot
         self.db = teams
 
+    # Its been a long time since i used my brain like this
     def pair_teams_linear(self, teams_iterable):
         size_buckets = {1: [], 2: [], 3: []}
         for team in teams_iterable:
@@ -34,27 +42,40 @@ class AutoPairing(commands.Cog):
 
         return result
 
-    @commands.hybrid_command(description="Auto pair teams so that total players = 4")
-    @commands.has_role("CORE")
-    async def autopair_bulk(self, ctx):
-        await ctx.defer()
-        cursor = self.db.find({}).batch_size(200)
+    @commands.hybrid_command(description="Auto-pair teams so total players = 4")
+    @commands.has_role(ADMIN_ROLE)
+    async def autopair_bulk(self, ctx: commands.Context):
+        if ctx.interaction:
+            await ctx.interaction.response.defer(ephemeral=True)
 
-        # Collect into list as we stream
-        teams = [team async for team in cursor]
-
-        # Off‑load CPU work
+        teams = [t async for t in self.db.find({}).batch_size(200)]
         paired = await asyncio.to_thread(self.pair_teams_linear, teams)
 
         if not paired:
-            return await ctx.send("No valid pairs found.")
+            return await ctx.send(
+                "No valid pairs found.", ephemeral=not ctx.interaction
+            )
 
         lines = [
-            f"✅ `{a['team_name']}` ({len(a['players'])}) + "
-            f"`{b['team_name']}` ({len(b['players'])})"
+            f"✅ `{a['team_name']}` ({len(a['players'])}) + `{b['team_name']}` ({len(b['players'])})"
             for a, b in paired
         ]
-        await ctx.send("**Paired Teams:**\n" + "\n".join(lines))
+        description = "\n".join(lines)
+
+        embed = discord.Embed(
+            title="🧠 Auto-Paired Teams",
+            description=description,
+            color=discord.Color.green(),
+        )
+
+        view = ConfirmView(
+            bot=self.bot, pairs=paired, interaction_user_id=ctx.author.id
+        )
+
+        if ctx.interaction:
+            await ctx.interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        else:
+            await ctx.send(embed=embed, view=view)
 
 
 async def setup(bot):

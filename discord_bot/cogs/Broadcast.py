@@ -12,12 +12,14 @@ class Broadcast(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.announcement_channel = int(getenv("ANNOUNCEMENT_CHANNEL"))
-        self.post_url = "http://127.0.0.1:2130/test/"
+        self.post_url = getenv("BROADCAST_URI")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.channel.id != self.announcement_channel or message.author.bot:
             return
+
+        assert self.post_url is not None, "Broadcast URI not found!"
 
         data = {
             "author": message.author.name,

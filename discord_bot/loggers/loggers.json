@@ -46,6 +46,10 @@
     "discord": {
       "level": "INFO",
       "propagate": false
+    },
+    "aiosqlite": {
+      "level": "INFO",
+      "propagate": false
     }
   },
   "root": {
