@@ -1,3 +1,6 @@
+import loggers  # Initializing the loggers
+import database  # Initializing database
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -5,7 +8,7 @@ from discord.ext import commands
 from typing import Optional, Type, Any
 from logging import getLogger
 
-from .utils import COGS
+from utils import COGS, DISCORD_API_TOKEN
 
 
 logger = getLogger(__name__)
@@ -32,9 +35,12 @@ class Bot(commands.Bot):
 
     # Lazy Loads every cog in the cogs directory
     async def setup_hook(self):
+        await database.init_db()
+        await database.init_teams()
         for extension in self.initial_extensions:
             try:
                 await self.load_extension(extension)
+                logger.info(f"Successfully loaded {extension}!")
             except Exception as e:
                 logger.error(f"Error loading extension {extension}: {e}")
 
@@ -60,4 +66,9 @@ def init_bot():
     intents.guilds = True
 
     bot = Bot(command_prefix="!", intents=intents)
-    return bot
+
+    assert DISCORD_API_TOKEN is not None, "Missing Discord bot token!"
+    bot.run(DISCORD_API_TOKEN)
+
+
+init_bot()

@@ -1,4 +1,4 @@
-from os import listdir
+from os import getenv, listdir
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,4 +11,5 @@ def get_cogs(path: str, prefix: str):
     ]
 
 
-COGS = get_cogs("discord_bot/cogs", "discord_bot.cogs")
+COGS = get_cogs("cogs", "cogs")
+DISCORD_API_TOKEN = getenv("DISCORD_API_TOKEN")

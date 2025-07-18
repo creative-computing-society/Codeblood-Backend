@@ -14,8 +14,6 @@ class Broadcast(commands.Cog):
         self.announcement_channel = int(getenv("ANNOUNCEMENT_CHANNEL"))
         self.post_url = "http://127.0.0.1:2130/test/"
 
-        assert self.announcement_channel is not None, f"{self.announcement_channel}"
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.channel.id != self.announcement_channel or message.author.bot:
@@ -40,4 +38,3 @@ class Broadcast(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Broadcast(bot))
-    logger.info("Broadcast cog loaded")
