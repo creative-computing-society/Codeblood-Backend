@@ -19,9 +19,9 @@ obscura_maze = discord.File(
 class StartupMessages(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.join_channel_id = 1395448700985413642
-        self.about_channel_id = 1395095152879599740
-        self.rules_channel_id = 1395095152879599740
+        self.join_channel_id = 1395877470590341290
+        self.about_channel_id = 1395877004368281620
+        self.rules_channel_id = 1395877379175485701
 
         asyncio.create_task(self._startup_send())
 
