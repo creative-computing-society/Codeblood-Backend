@@ -1,0 +1,5 @@
+{
+  "q1": {"Answer": "42", "Points": 10},
+  "q2": {"Answer": "Python", "Points": 15},
+  "q3": {"Answer": "FastAPI", "Points": 20}
+}

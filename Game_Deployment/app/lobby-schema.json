@@ -1,0 +1,8 @@
+{
+  "_comment": "Will store Lobby ID (uuid4/uuid5) on which websocket will run on",
+  "_collection_name": "lobby",
+  "team_leader_id": {
+    "lobby_id": "uuid5",
+    "socket_id": "idk"
+  }
+}
