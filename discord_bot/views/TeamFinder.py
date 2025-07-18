@@ -1,5 +1,6 @@
 import discord
 
+import aiosqlite
 from logging import getLogger
 from database import teams
 from views.utils import create_failure_embed, create_success_embed
@@ -24,6 +25,20 @@ class LookingForTeamView(discord.ui.View):
     async def select_role(
         self, interaction: discord.Interaction, select: discord.ui.Select
     ):
+        async with aiosqlite.connect("lft.db") as db:
+            cursor = await db.execute(
+                "SELECT 1 FROM lft_users WHERE discord_id = ?", (interaction.user.id,)
+            )
+            exists = await cursor.fetchone()
+
+            if exists:
+                embed = discord.Embed(
+                    color=discord.Color.red(),
+                    description="You're already marked as Looking For Team!",
+                ).set_footer(text="Contact CORE if this is a mistake!")
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
         if not isinstance(interaction.channel, discord.TextChannel):
             return
 
@@ -46,7 +61,7 @@ class LookingForTeamView(discord.ui.View):
         )
 
         if not lookers_team:
-            embed = create_success_embed(
+            embed = create_failure_embed(
                 "You are not registered! Please [register](https://obscura.ccstiet.com/) to look for a team! If you are registered, please contact CORE",
                 title="User not registered",
             )
@@ -166,3 +181,8 @@ class LookingForTeamView(discord.ui.View):
             ),
             ephemeral=True,
         )
+
+        await db.execute(
+            "INSERT INTO lft_users (discord_id) VALUES (?)", (interaction.user.id,)
+        )
+        await db.commit()

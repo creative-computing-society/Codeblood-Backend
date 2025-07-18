@@ -1,6 +1,5 @@
-from os import getenv, path
+from os import getenv
 import discord
-from discord.abc import PrivateChannel
 from discord.ext import commands, tasks
 
 import asyncio
@@ -12,10 +11,9 @@ from views import TeamChannelButton
 
 logger = getLogger(__name__)
 
-CATEGORY_NAME = "OBSCURA"
+CATEGORY_NAME = "OBSCURA VOICE CHANNELS"
 ADMIN_ROLE = getenv("ADMIN_ROLE")
 
-logo = discord.File(path.join("assets", "logo.png"), filename="logo.png")
 
 assert teams is not None, "Teams collection not found!"
 assert ADMIN_ROLE is not None, "Admin role not found!"
@@ -24,13 +22,11 @@ assert ADMIN_ROLE is not None, "Admin role not found!"
 class TeamChannels(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.channel_id = 1395448700985413642
         self._invalid_ids = []
         self._not_in_guild = []
         self._creating = False
 
         self.bot.add_view(TeamChannelButton())
-        asyncio.create_task(self._startup_send())
 
         self.auto_channel_creation.start()
 
@@ -48,15 +44,6 @@ class TeamChannels(commands.Cog):
 
     async def cog_unload(self):
         self.auto_channel_creation.cancel()
-
-    # Creates the "Welcome to Obscura" message
-    async def _startup_send(self) -> None:
-        await self.bot.wait_until_ready()
-
-        try:
-            await self.send_event_message()
-        except Exception:
-            logger.exception("Error in send_event_message")
 
     @tasks.loop(minutes=15)
     async def auto_channel_creation(self):
@@ -130,31 +117,45 @@ class TeamChannels(commands.Cog):
 
     # Creates the voice channels and edit's their permission
     async def _create_voice_channel(self, team: Dict[str, Any], guild: discord.Guild):
-        overwrites: Mapping[Any, discord.PermissionOverwrite] = {
-            guild.default_role: discord.PermissionOverwrite(
-                view_channel=False, connect=False
-            ),
-        }
-
         team_name = team["team_name"]
         players = team["players"]
 
-        # Gets the members in parallel cause I love async coding
+        # Resolve members from DB
         resolved_members = await asyncio.gather(
             *[self.resolve_player(p, guild) for p in players]
         )
+        resolved_members = list(filter(None, resolved_members))
 
-        # Makes the overwrites according to each memeber
-        for member in filter(None, resolved_members):
+        # Build overwrites for team members
+        overwrites: Mapping[Any, discord.PermissionOverwrite] = {
+            guild.default_role: discord.PermissionOverwrite(
+                view_channel=False, connect=False
+            )
+        }
+        for member in resolved_members:
             overwrites[member] = discord.PermissionOverwrite(
                 view_channel=True, connect=True
             )
 
-        # Get/create category
-        category = discord.utils.get(guild.categories, name="Obscura")
-        if not category:
+        # Find a category with < 50 voice channels
+        def get_or_create_category_slot(
+            guild: discord.Guild, base_name: str = CATEGORY_NAME
+        ):
+            for category in guild.categories:
+                if (
+                    category.name.startswith(base_name)
+                    and len(category.voice_channels) < 50
+                ):
+                    return category
+            return None
+
+        category = get_or_create_category_slot(guild)
+
+        # If no suitable category, make a new one
+        if category is None:
+            count = sum(1 for c in guild.categories if c.name.startswith(CATEGORY_NAME))
             category = await guild.create_category(
-                name="Obscura",
+                name=f"OBSCURA VOICE CHANNELS #{count + 1}",
                 overwrites={
                     guild.default_role: discord.PermissionOverwrite(
                         view_channel=False, connect=False
@@ -162,50 +163,33 @@ class TeamChannels(commands.Cog):
                 },
             )
 
-        # ❗ Check if voice channel already exists
+        # Check if VC already exists
         existing_channel = discord.utils.get(category.voice_channels, name=team_name)
-
         if existing_channel:
+            # Cleanup old permissions
+            cleanup_tasks = [
+                existing_channel.set_permissions(target, overwrite=None)
+                for target in existing_channel.overwrites
+                if isinstance(target, discord.Member) and target not in resolved_members
+            ]
+            update_tasks = [
+                existing_channel.set_permissions(
+                    member,
+                    overwrite=discord.PermissionOverwrite(
+                        view_channel=True, connect=True
+                    ),
+                )
+                for member in resolved_members
+            ]
+            await asyncio.gather(*cleanup_tasks, *update_tasks)
             return
 
+        # Create VC
         await guild.create_voice_channel(
-            name=team_name, category=category, overwrites=overwrites
+            name=team_name,
+            category=category,
+            overwrites=overwrites,
         )
-
-    async def send_event_message(self):
-        logger.info("Sending event message")
-
-        guild = self.bot.guilds[0]
-
-        if not guild:
-            logger.warning("Guild not found. Aborting on_ready task.")
-            return
-
-        channel = self.bot.get_channel(self.channel_id)
-
-        if not channel:
-            category = discord.utils.get(guild.categories, name=CATEGORY_NAME)
-            channel = await guild.create_text_channel(
-                "🚀・join-team-channel", category=category
-            )
-
-        if isinstance(
-            channel, (discord.ForumChannel, PrivateChannel, discord.CategoryChannel)
-        ):
-            logger.error("Channel must be a Text Channel!")
-            return
-
-        embed = discord.Embed(
-            title="Welcome to Obscura!",
-            description="To participate in the event, you need to join your team on Discord. You will be assignedto your team's voice channels. Click the button below to join your team.\n\n"
-            + "Kindly ensure that your Discord username matches the one you provided during registration. Use the designated channels for all event-related communication. For any issues or assistance, feel free to contact any team officials. We hope you have an incredible experience! Have adventurous gameplay!",
-            colour=discord.Color.red(),
-        )
-
-        embed.set_thumbnail(url="attachment://logo.png")
-        embed.set_footer(text="Contact Core if you have any issues.")
-
-        await channel.send(embed=embed, view=TeamChannelButton(), file=logo)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):

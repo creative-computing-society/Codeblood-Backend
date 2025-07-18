@@ -43,7 +43,7 @@ class TeamChannelButton(discord.ui.View):
                 color=discord.Color.red(),
                 title="Team information not found!",
                 description="Please make sure to register yourself for OBSCURA from the [OBSCURA registeration portal](https://obscura.ccstiet.com/).\n"
-                + "If you have already registered, then most likely your Discord ID is wrong.\n"
+                + "If you have already registered, then most likely your Discord ID is wrong or you have joined with the wrong discord ID\n"
                 + "You can edit it on the team dashboard on the Registration Portal.",
             ).set_footer(text="If the issue percists, please contact CORE-25")
 
@@ -62,7 +62,7 @@ class TeamChannelButton(discord.ui.View):
             }
 
             # Gets the Obscura category
-            category = discord.utils.get(guild.categories, name="Obscura")
+            category = discord.utils.get(guild.categories, name="OBSCURA")
 
             if category is None:
                 category_overwrites: Dict[
@@ -73,7 +73,7 @@ class TeamChannelButton(discord.ui.View):
                     ),
                 }
                 await guild.create_category(
-                    name="Obscura", overwrites=category_overwrites
+                    name="OBSCURA", overwrites=category_overwrites
                 )
 
             # Creates a voice channel

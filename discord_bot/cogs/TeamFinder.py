@@ -1,10 +1,9 @@
-import discord
 from discord.ext import commands
 
 from database import teams
 from views import LookingForTeamView
+from views.utils import create_failure_embed
 
-import aiosqlite
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -16,25 +15,14 @@ class TeamFinder(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command("team-finder")
-    async def lft(self, ctx):
-        async with aiosqlite.connect("lft.db") as db:
-            cursor = await db.execute(
-                "SELECT 1 FROM lft_users WHERE discord_id = ?", (ctx.author.id,)
+    async def lft(self, ctx: commands.Context):
+        if ctx.channel.id != 1395877818570903622:
+            embed = create_failure_embed(
+                "You can only run this command in 🤝・find-teammates-here!",
+                title="Permission Denied",
             )
-            exists = await cursor.fetchone()
-
-            if exists:
-                embed = discord.Embed(
-                    color=discord.Color.red(),
-                    description="You're already marked as Looking For Team!",
-                ).set_footer(text="Contact CORE if this is a mistake!")
-                await ctx.send(embed=embed, ephemeral=True)
-                return
-
-            await db.execute(
-                "INSERT INTO lft_users (discord_id) VALUES (?)", (ctx.author.id,)
-            )
-            await db.commit()
+            await ctx.send(embed=embed)
+            return
 
         view = LookingForTeamView(ctx.author.id)
         await ctx.send("Select your role:", view=view, ephemeral=True)

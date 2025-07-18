@@ -1,24 +1,28 @@
-import database
 import asyncio
 import json
 
+from database import init_teams, init_db
+
+
+OUTPUT_FILE = "teams.json"
+
 
 async def main():
-    # 1) Initialize your DB and collections
-    await database.init_db()
-    await database.init_teams()
+    await init_db()
+    await init_teams()
 
-    # 2) Grab the collection
-    teams = database.teams
-    assert teams is not None, "Collection not initialized"
+    from database import teams
 
-    # 3) Load your JSON data
-    with open("populate.json") as f:
-        data = json.load(f)  # should be a list of dicts
+    assert teams is not None
+    data = await teams.find({}).to_list(length=None)
 
-    # 4) Bulk insert
-    result = await teams.insert_many(data)
-    print(f"Inserted {len(result.inserted_ids)} documents.")
+    for doc in data:
+        doc["_id"] = str(doc["_id"])
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+    print(f"Dumped {len(data)} documents to {OUTPUT_FILE}")
 
 
 if __name__ == "__main__":
