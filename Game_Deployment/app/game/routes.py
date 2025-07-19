@@ -29,11 +29,11 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     lobbies = request.app.state.lobbies
     teams = request.app.state.teams
 
-    if not lobbies or not teams:
+    if lobbies is None or teams is None:
         return JSONResponse({"error": "Database collections not initialized"}, status_code=500)
 
     team = await teams.find_one({"players.email": email}, {"players.$": 1, "team_code": 1})
-    if not team:
+    if team is None:
         return JSONResponse({"error": "Player not registered in any team"}, status_code=404)
 
     player_data = team["players"][0]
@@ -86,9 +86,9 @@ async def check_answer(request : Request , payload: CheckAnswerPayload, email: s
 @limiter.limit("10/minute")
 async def team_status_update(request : Request, payload: TeamStatusUpdatePayload, email: str = Depends(verify_cookie)):
     now = datetime.utcnow()
-
+    points = request.app.state.points
     team_data = await points.find_one({"team_code": payload.team_id})
-    if not team_data:
+    if team_data is None:
         return JSONResponse({"error": "Invalid team ID"}, status_code=400)
 
     try:
