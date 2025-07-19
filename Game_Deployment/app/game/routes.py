@@ -37,7 +37,7 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
         return JSONResponse({"error": "Player not registered in any team"}, status_code=404)
 
     player_data = team["players"][0]
-    player = Player(**player_data)  
+    # player = Player(**player_data)  
 
     
     team_code = team["team_code"]
@@ -57,7 +57,7 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     response_data = {
         "lobby_id": lobby["lobby_id"],
         "team_code": team_code,
-        "player": player.dict(),  # Only the logged-in user's data
+        "player": player_data,  # Only the logged-in user's data
     }
 
     return JSONResponse(response_data)
