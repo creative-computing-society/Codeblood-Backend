@@ -90,6 +90,7 @@ async def check_answer(request : Request, payload: CheckAnswerPayload, email: st
 @limiter.limit("10/minute")
 async def team_status_update(request : Request, payload: TeamStatusUpdatePayload, email: str = Depends(verify_cookie)):
     now = datetime.utcnow()
+    teams = request.app.state.teams
     points = request.app.state.points
     team_data = await points.find_one({"team_code": payload.team_id})
     if team_data is None:
@@ -100,8 +101,8 @@ async def team_status_update(request : Request, payload: TeamStatusUpdatePayload
     # except Exception as e:
     #     return JSONResponse({"error": f"Data validation error: {str(e)}"}, status_code=500)
 
-    if team.Current_Level_Entered_At:
-        time_spent = (now - team.Current_Level_Entered_At).total_seconds()
+    if teams.Current_Level_Entered_At:
+        time_spent = (now - teams.Current_Level_Entered_At).total_seconds()
         update_data = {
             "$inc": {"Levels_Cleared": 1, "Total_Time_To_Clear_Levels": time_spent},
             "$set": {"Current_level": payload.level_number, "Current_Level_Entered_At": now},
