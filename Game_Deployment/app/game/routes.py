@@ -66,7 +66,11 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
 
 @game_router.post("/check_answer")
 @limiter.limit("15/minute")
-async def check_answer(request : Request , payload: CheckAnswerPayload, email: str = Depends(verify_cookie)):
+async def check_answer(request : Request, payload: CheckAnswerPayload, email: str = Depends(verify_cookie)):
+    points = request.app.state.points  # Access the points collection from app state
+    if points is None:
+        return JSONResponse({"error": "Points collection not initialized"}, status_code=500)
+
     question = QUESTIONS.get(payload.question_id)
     if not question:
         return JSONResponse({"error": "Invalid question ID"}, status_code=400)
