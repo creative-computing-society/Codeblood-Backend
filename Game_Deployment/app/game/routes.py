@@ -79,6 +79,7 @@ async def check_answer(request : Request, payload: CheckAnswerPayload, email: st
         result = await points.update_one(
             {"team_code": payload.team_id},
             {"$inc": {"Points": question["Points"], "Question_solved": 1}},
+            upsert=True
         )
         if result.matched_count == 0:
             return JSONResponse({"error": "Team not found"}, status_code=404)
