@@ -95,10 +95,10 @@ async def team_status_update(request : Request, payload: TeamStatusUpdatePayload
     if team_data is None:
         return JSONResponse({"error": "Invalid team ID"}, status_code=400)
 
-    try:
-        team = Points(**team_data)  
-    except Exception as e:
-        return JSONResponse({"error": f"Data validation error: {str(e)}"}, status_code=500)
+    # try:
+    #     team = Points(**team_data)  
+    # except Exception as e:
+    #     return JSONResponse({"error": f"Data validation error: {str(e)}"}, status_code=500)
 
     if team.Current_Level_Entered_At:
         time_spent = (now - team.Current_Level_Entered_At).total_seconds()
@@ -111,7 +111,7 @@ async def team_status_update(request : Request, payload: TeamStatusUpdatePayload
             "$set": {"Current_level": payload.level_number, "Current_Level_Entered_At": now},
         }
 
-    result = await points.update_one({"team_code": payload.team_id}, update_data)
+    result = await points.update_one({"team_code": payload.team_id}, update_data, upsert=True)
     if result.matched_count == 0:
         return JSONResponse({"error": "Failed to update team status"}, status_code=500)
 
