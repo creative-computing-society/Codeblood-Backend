@@ -26,21 +26,21 @@ with open(questions_path, "r") as f:
 @limiter.limit("10/minute")
 async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     lobbies = request.app.state.lobbies  # Access the lobbies collection from app state
-    if not lobbies:
+    if lobbies is None:
         return JSONResponse({"error": "Lobbies collection not initialized"}, status_code=500)
 
     teams = request.app.state.teams
-    if not teams:
+    if teams is None:
         return JSONResponse({"error": "Teams collection not initialized"}, status_code=500)
 
     team = await teams.find_one({"players.email": email})
-    if not team:
+    if team is None:
         return JSONResponse({"error": "Player Not Registered"}, status_code=404)
 
     player_data = next(
         (player for player in team["players"] if player["email"] == email), None
     )
-    if not player_data:
+    if player_data is None:
         return JSONResponse({"error": "Player not found in the team"}, status_code=404)
 
     player_data["is_hacker"] = player_data.get("is_hacker", False)
