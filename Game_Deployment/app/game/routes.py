@@ -69,7 +69,7 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
 
 @game_router.post("/check_answer")
 @limiter.limit("15/minute")
-async def check_answer(request: Request, question_id: str, answer: str, team_id: str, email: str = Depends(verify_cookie)):
+async def check_answer(request: Request, question_d: str, answer: str, team_id: str, email: str = Depends(verify_cookie)):
     question = QUESTIONS.get(question_id)
     if not question:
         return JSONResponse({"error": "Invalid question ID"}, status_code=400)

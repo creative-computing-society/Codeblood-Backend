@@ -1,5 +1,218 @@
 {
-  "q1": {"Answer": "42", "Points": 10},
-  "q2": {"Answer": "Python", "Points": 15},
-  "q3": {"Answer": "FastAPI", "Points": 20}
+  "7f747417-3d3b-445b-ae49-bd9db1d45cfc": {
+    "Answer": "OWoodflint",
+    "Points": 50
+  },
+  "4c45aa55-e538-4fbb-b9a4-b711e829f70f": {
+    "Answer": "robocop",
+    "Points": 50
+  },
+  "3d15e10b-881b-4640-aec0-0fa9776d06e2": {
+    "Answer": "Ciconia_ciconia",
+    "Points": 50
+  },
+  "15efa4ac-d12d-4490-b17c-a0469e83cf69": {
+    "Answer": "Pyongyang",
+    "Points": 50
+  },
+  "caa1ebea-2759-4902-a530-80e9050708fc": {
+    "Answer": "forensics_is_fun",
+    "Points": 50
+  },
+  "6c1e604a-5887-4adf-a452-4b4ee3f80b86": {
+    "Answer": "Never_stop_learning",
+    "Points": 50
+  },
+  "a46cbb1a-e825-45f7-9ec9-0505b37ace0b": {
+    "Answer": "steppingstone",
+    "Points": 50
+  },
+  "12c26196-b6b7-4ee0-b8c9-41007c643f4d": {
+    "Answer": "forgotten_name",
+    "Points": 50
+  },
+  "bb2e1175-6d3b-4075-b4c1-a4d369a17dd2": {
+    "Answer": "echo_lsb",
+    "Points": 100
+  },
+  "65c16587-2118-4648-bda8-08fd409d53c6": {
+    "Answer": "M41NFR4M3",
+    "Points": 100
+  },
+  "28800b65-8b93-4403-bcee-6f2020dfbb22": {
+    "Answer": "openxml",
+    "Points": 100
+  },
+  "f61baa48-e763-41d0-bc3a-5996f986b68c": {
+    "Answer": "hellokitty",
+    "Points": 100
+  },
+  "69feaf0c-8af0-416d-8566-1fd709415f84": {
+    "Answer": "sheLL-Analysis-don3",
+    "Points": 100
+  },
+  "a5e1b124-077f-4675-b071-76a621054027": {
+    "Answer": "Y0u_g0T_tH1s_F!n@LLy",
+    "Points": 100
+  },
+  "8a36987a-9183-4bf3-9ac3-aff17ad8c6a9": {
+    "Answer": "obscura_header",
+    "Points": 100
+  },
+  "c65f96fe-628b-4131-abe0-c54a49b54349": {
+    "Answer": "labyrinth_twist",
+    "Points": 100
+  },
+  "44a2e2bf-0b61-41d0-a9f0-90d873ac44ba": {
+    "Answer": "baguette",
+    "Points": 150
+  },
+  "5320f60e-0539-4540-a5c8-b8c99c659455": {
+    "Answer": "pizzanapoli",
+    "Points": 150
+  },
+  "a4de6307-5d76-4077-9070-a134f339e6b6": {
+    "Answer": "double_layered_truth",
+    "Points": 150
+  },
+  "47d07dd4-a6ac-4991-acbc-528fa719478b": {
+    "Answer": "vigenere_echoes",
+    "Points": 150
+  },
+  "23400bbc-fc11-41eb-8bc3-b4839e492654": {
+    "Answer": "fragmented_html_truth",
+    "Points": 150
+  },
+  "954aa611-d231-4006-89a5-e70f1f9bf5c7": {
+    "Answer": "citadel_reverse",
+    "Points": 150
+  },
+  "edb1247c-2368-4309-9a0a-78cf718f666c": {
+    "Answer": "hex_comment_decoded",
+    "Points": 200
+  },
+  "d72ae418-c021-406f-80c6-cba8eaf6ab2c": {
+    "Answer": "sauerkraut",
+    "Points": 200
+  },
+  "5f007e03-7f83-4ec5-9f2f-33231ab36272": {
+    "Answer": "notsecure",
+    "Points": 200
+  },
+  "933f75fe-94e1-4079-9f0c-6014c5e32447": {
+    "Answer": "zipception",
+    "Points": 200
+  },
+  "6fa63e9f-2bea-48c8-b491-c2f6274783ed": {
+    "Answer": "leakage",
+    "Points": 200
+  },
+  "36ab4057-7c27-442b-a0d2-48bf51fe1da2": {
+    "Answer": "zlib_hex_truth",
+    "Points": 200
+  },
+  "c06c04d9-eb5a-4ce6-90ea-8b3d999c856a": {
+    "Answer": "sector41_memory",
+    "Points": 200
+  },
+  "c137b23e-aa45-42ef-a170-e832152d34f5": {
+    "Answer": "vault_unzipped",
+    "Points": 200
+  },
+  "bc73054a-c2f8-4d7b-9005-fca29ca52a81": {
+    "Answer": "voice_in_the_noise",
+    "Points": 250
+  },
+  "ec91cf23-dbe5-438f-8dad-e74c0705978c": {
+    "Answer": "reverse_base64_signature",
+    "Points": 250
+  },
+  "60b9f266-c66a-4c34-9366-176333b8313d": {
+    "Answer": "brute",
+    "Points": 250
+  },
+  "eb50af76-f25f-4680-918b-741b9b7f01df": {
+    "Answer": "unsafe_include",
+    "Points": 250
+  },
+  "0b81b658-fb5c-4406-b76a-f2d3af24cabf": {
+    "Answer": "happy_holidays",
+    "Points": 250
+  },
+  "3b4fce87-a140-41c8-bbdc-30181b86bfc1": {
+    "Answer": "qrglitch",
+    "Points": 250
+  },
+  "4b68246f-2d52-45a6-9b0c-a129a197ddda": {
+    "Answer": "keymaster",
+    "Points": 250
+  },
+  "9385b0a5-c3ef-4464-991e-acc07169ff81": {
+    "Answer": "headerhunt",
+    "Points": 250
+  },
+  "d1ceb821-623c-4831-8f3e-b9a39f7f6a46": {
+    "Answer": "qr_caesar_layer",
+    "Points": 250
+  },
+  "342d7642-3843-4a6c-9f8a-b3a315193e28": {
+    "Answer": "cradle_xor",
+    "Points": 250
+  },
+  "d4260125-7231-4063-b9b8-8868c79d5402": {
+    "Answer": "lsb_red_protocol",
+    "Points": 350
+  },
+  "bbb62b30-b418-4f3a-a001-f7154959b056": {
+    "Answer": "recursion_unsealed",
+    "Points": 350
+  },
+  "58a4eea3-67b6-466d-a069-83c5f28564df": {
+    "Answer": "fragmented_memory",
+    "Points": 350
+  },
+  "67460daf-dc45-4872-a61c-0ec0d42dbea2": {
+    "Answer": "sadr0b0tz",
+    "Points": 350
+  },
+  "5539a6b4-2ec5-4b5c-bc0f-ff5c4e6948db": {
+    "Answer": "w0rst_j4v4scr1pt_3v3r!",
+    "Points": 350
+  },
+  "a763f28f-532f-40af-a94e-5e7d7490eeb1": {
+    "Answer": "askwho?",
+    "Points": 350
+  },
+  "0951bd7f-3d13-43fc-a852-50b3fa1122e6": {
+    "Answer": "inception",
+    "Points": 350
+  },
+  "35188606-e211-49d4-ae7f-437396a42d67": {
+    "Answer": "transparency",
+    "Points": 350
+  },
+  "4d0dea20-1451-489c-ab09-317d2f11b8f9": {
+    "Answer": "echo_depths",
+    "Points": 350
+  },
+  "9b4e0996-1f05-49fb-935a-b7991a0c2257": {
+    "Answer": "notsosecret",
+    "Points": 350
+  },
+  "7ca4c6df-2cbc-4cbf-be15-38366616eb90": {
+    "Answer": "meta42",
+    "Points": 350
+  },
+  "9091660b-1055-4f1e-85be-332d934bf708": {
+    "Answer": "root_audio",
+    "Points": 350
+  },
+  "b75ee3be-6d72-4425-9c9b-0badad3b29c1": {
+    "Answer": "sum_of_keys",
+    "Points": 350
+  },
+  "581c5bef-82c7-4002-aec1-1f7a659f65b3": {
+    "Answer": "silent_amplitude",
+    "Points": 350
+  }
 }
