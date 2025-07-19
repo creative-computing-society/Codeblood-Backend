@@ -155,7 +155,7 @@ async def bulk_mail(background_tasks: BackgroundTasks):
             background_tasks.add_task(
                 send_mail,
                 to_email=player["email"],
-                subject="Complete Your Team - Obscura Awaits You!",
+                subject="LAST CHANCE: Complete Your Team for Obscura!",
                 name=player["name"],
                 team_name=team["team_name"],
                 team_code=team["team_code"]  # Pass the team_code here

@@ -8,9 +8,9 @@ from jinja2 import Template
 file_path = os.path.join(os.getcwd(), "app", "utils", "TEAMCOMPLETE.html")
 
 # Load HTML template (only once)
-with open(file_path, "r") as f:
+with open(file_path, "r", encoding="utf-8") as f:
     html_template = Template(f.read())
-    
+
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_FROM = os.getenv("MAIL_FROM")
