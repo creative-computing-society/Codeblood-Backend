@@ -36,7 +36,7 @@ export class Lobby extends Room<LobbyState> {
     this.joinCode = options.joinCode;
     const savedState = loadStateFromDisk(options.joinCode);
     if (savedState != null) {
-      this.state = savedState;
+      this.state.assign(savedState);
     }
     this.autoDispose = false; // if all players leave, the room will not be disposed automatically
     if (!options.joinCode) {
