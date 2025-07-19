@@ -65,7 +65,7 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
 
 @game_router.post("/check_answer")
 @limiter.limit("15/minute")
-async def check_answer(payload: CheckAnswerPayload, email: str = Depends(verify_cookie)):
+async def check_answer(request : Request , payload: CheckAnswerPayload, email: str = Depends(verify_cookie)):
     question = QUESTIONS.get(payload.question_id)
     if not question:
         return JSONResponse({"error": "Invalid question ID"}, status_code=400)
@@ -84,7 +84,7 @@ async def check_answer(payload: CheckAnswerPayload, email: str = Depends(verify_
 
 @game_router.post("/team_status_update")
 @limiter.limit("10/minute")
-async def team_status_update(payload: TeamStatusUpdatePayload, email: str = Depends(verify_cookie)):
+async def team_status_update(request : Request, payload: TeamStatusUpdatePayload, email: str = Depends(verify_cookie)):
     now = datetime.utcnow()
 
     team_data = await points.find_one({"team_code": payload.team_id})
@@ -116,7 +116,7 @@ async def team_status_update(payload: TeamStatusUpdatePayload, email: str = Depe
 
 @game_router.post("/individual_status_update")
 @limiter.limit("10/minute")
-async def individual_status_update(payload: IndividualStatusUpdatePayload, email: str = Depends(verify_cookie)):
+async def individual_status_update(request : Request, payload: IndividualStatusUpdatePayload, email: str = Depends(verify_cookie)):
     result = await players.update_one(
         {"user_name": payload.username},
         {"$set": {f"Status.{payload.level}": payload.checkpoint}},
