@@ -37,7 +37,7 @@ COPY . .
 
 ENV PATH="/usr/local/bin:$PATH"
 
-EXPOSE 3021
+EXPOSE 2130
 
 ENV IS_DEV=False
 ENV SECURE_LOGIN=True
