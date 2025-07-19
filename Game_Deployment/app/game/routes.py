@@ -25,6 +25,10 @@ with open(questions_path, "r") as f:
 @game_router.post("/set_lobby")
 @limiter.limit("10/minute")
 async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
+    teams = request.app.state.teams  
+    if not teams:
+        return JSONResponse({"error": "Teams collection not initialized"}, status_code=500)
+
     team = await teams.find_one({"players.email": email})
     if not team:
         return JSONResponse({"error": "Player Not Registered"}, status_code=404)
