@@ -94,6 +94,13 @@ export class Lobby extends Room<LobbyState> {
       this.broadcast("spawnMarker", message);
       saveStateToDisk(options.joinCode, this.state);
     });
+    this.onMessage("enemyUpdate", (client, message) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player) {
+        return;
+      }
+      this.broadcast("enemyUpdate", message);
+    })
   }
 
   onJoin (client: Client, options: JoinOptions) {
