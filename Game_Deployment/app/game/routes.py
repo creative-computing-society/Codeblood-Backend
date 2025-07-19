@@ -25,18 +25,22 @@ with open(questions_path, "r") as f:
 @game_router.post("/set_lobby")
 @limiter.limit("10/minute")
 async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
-    teams = request.app.state.teams  
-    if teams is None:
+    lobbies = request.app.state.lobbies  # Access the lobbies collection from app state
+    if not lobbies:
+        return JSONResponse({"error": "Lobbies collection not initialized"}, status_code=500)
+
+    teams = request.app.state.teams
+    if not teams:
         return JSONResponse({"error": "Teams collection not initialized"}, status_code=500)
 
     team = await teams.find_one({"players.email": email})
-    if teams is None:
+    if not team:
         return JSONResponse({"error": "Player Not Registered"}, status_code=404)
 
     player_data = next(
         (player for player in team["players"] if player["email"] == email), None
     )
-    if player_data is None:
+    if not player_data:
         return JSONResponse({"error": "Player not found in the team"}, status_code=404)
 
     player_data["is_hacker"] = player_data.get("is_hacker", False)
@@ -44,7 +48,7 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
 
     team_code = team["team_code"]
     lobby = await lobbies.find_one({"team_code": team_code})
-    if lobby is None:
+    if not lobby:
         lobby_id = str(uuid4())[:8]
         lobby_data = {
             "lobby_id": lobby_id,
