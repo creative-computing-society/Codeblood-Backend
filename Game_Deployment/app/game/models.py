@@ -24,3 +24,17 @@ class Points(BaseModel):
     Points: int = 0
     Current_Level_Entered_At: Optional[datetime] = None
     Total_Time_To_Clear_Levels: float = 0.0
+
+class TeamStatusUpdatePayload(BaseModel):
+    team_id: str
+    level_number: int
+
+class IndividualStatusUpdatePayload(BaseModel):
+    username: str
+    level: int
+    checkpoint: int
+
+class CheckAnswerPayload(BaseModel):
+    question_id: str
+    answer: str
+    team_id: str
