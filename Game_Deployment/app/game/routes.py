@@ -25,35 +25,37 @@ with open(questions_path, "r") as f:
 @game_router.post("/set_lobby")
 @limiter.limit("10/minute")
 async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
-
+    
+    # Access the lobbies and teams collections
     lobbies = request.app.state.lobbies
     teams = request.app.state.teams
 
-    if lobbies is None or teams is None:
+    if not lobbies or not teams:
         return JSONResponse({"error": "Database collections not initialized"}, status_code=500)
 
+    # Fetch the user's team and player data in a single query
     team = await teams.find_one({"players.email": email}, {"players.$": 1, "team_code": 1})
-    if team is None:
+    if not team:
         return JSONResponse({"error": "Player not registered in any team"}, status_code=404)
 
+    # Extract the logged-in player's data
     player_data = team["players"][0]
-    # player = Player(**player_data)  
 
-    
+    # Check if a lobby already exists for the team
     team_code = team["team_code"]
     lobby = await lobbies.find_one({"team_code": team_code})
     if not lobby:
-        
+        # Create a new lobby if it doesn't exist
         lobby_id = str(uuid4())[:8]
-        lobby_data = Lobby(
-            lobby_id=lobby_id,
-            team_code=team_code,
-            players=[Player(**p) for p in team["players"]]
-        )
-        await lobbies.insert_one(lobby_data.dict())
-        lobby = lobby_data.dict()
+        lobby_data = {
+            "lobby_id": lobby_id,
+            "team_code": team_code,
+            "players": team["players"],  # Use raw player data without Pydantic validation
+        }
+        await lobbies.insert_one(lobby_data)
+        lobby = lobby_data
 
-    
+    # Prepare the response
     response_data = {
         "lobby_id": lobby["lobby_id"],
         "team_code": team_code,
@@ -61,7 +63,6 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     }
 
     return JSONResponse(response_data)
-
 
 @game_router.post("/check_answer")
 @limiter.limit("15/minute")
