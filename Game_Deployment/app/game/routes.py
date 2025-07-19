@@ -88,30 +88,32 @@ async def check_answer(request : Request, payload: CheckAnswerPayload, email: st
 
 @game_router.post("/team_status_update")
 @limiter.limit("10/minute")
-async def team_status_update(request : Request, payload: TeamStatusUpdatePayload, email: str = Depends(verify_cookie)):
+async def team_status_update(request: Request, payload: TeamStatusUpdatePayload, email: str = Depends(verify_cookie)):
     now = datetime.utcnow()
-    teams = request.app.state.teams
-    points = request.app.state.points
+    points = request.app.state.points  # Access the points collection from app state
+
+    if not points:
+        return JSONResponse({"error": "Points collection not initialized"}, status_code=500)
+
+    # Fetch the team data
     team_data = await points.find_one({"team_code": payload.team_id})
-    if team_data is None:
+    if not team_data:
         return JSONResponse({"error": "Invalid team ID"}, status_code=400)
 
-    # try:
-    #     team = Points(**team_data)  
-    # except Exception as e:
-    #     return JSONResponse({"error": f"Data validation error: {str(e)}"}, status_code=500)
-
-    if teams.Current_Level_Entered_At:
-        time_spent = (now - teams.Current_Level_Entered_At).total_seconds()
+    # Check if the team has a previous level entry time
+    if team_data.get("Current_Level_Entered_At"):
+        time_spent = (now - team_data["Current_Level_Entered_At"]).total_seconds()
         update_data = {
             "$inc": {"Levels_Cleared": 1, "Total_Time_To_Clear_Levels": time_spent},
             "$set": {"Current_level": payload.level_number, "Current_Level_Entered_At": now},
         }
     else:
+        # If no previous level entry time, just set the current level and entry time
         update_data = {
             "$set": {"Current_level": payload.level_number, "Current_Level_Entered_At": now},
         }
 
+    # Perform the update
     result = await points.update_one({"team_code": payload.team_id}, update_data, upsert=True)
     if result.matched_count == 0:
         return JSONResponse({"error": "Failed to update team status"}, status_code=500)
