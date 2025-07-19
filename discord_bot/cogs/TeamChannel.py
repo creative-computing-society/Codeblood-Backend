@@ -45,7 +45,7 @@ class TeamChannels(commands.Cog):
     async def cog_unload(self):
         self.auto_channel_creation.cancel()
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=5)
     async def auto_channel_creation(self):
         if self._creating:
             return
@@ -117,7 +117,7 @@ class TeamChannels(commands.Cog):
 
     # Creates the voice channels and edit's their permission
     async def _create_voice_channel(self, team: Dict[str, Any], guild: discord.Guild):
-        team_name = team["team_name"]
+        team_name: str = team["team_name"]
         players = team["players"]
 
         # Resolve members from DB
@@ -127,7 +127,11 @@ class TeamChannels(commands.Cog):
         resolved_members = list(filter(None, resolved_members))
 
         # Check if VC already exists
-        existing_channel = discord.utils.get(guild.voice_channels, name=team_name)
+        normalized_team_name = team_name.strip().lower().replace(" ", "-")
+        existing_channel = discord.utils.get(
+            guild.voice_channels, name=normalized_team_name
+        )
+
         if existing_channel:
             # Cleanup old permissions
             cleanup_tasks = [
@@ -186,7 +190,7 @@ class TeamChannels(commands.Cog):
 
         # Create VC
         await guild.create_voice_channel(
-            name=team_name,
+            name=normalized_team_name,
             category=category,
             overwrites=overwrites,
         )
@@ -269,6 +273,47 @@ class TeamChannels(commands.Cog):
             await ctx.author.send(not_in_guild_id_text)
 
         self._creating = False
+
+    @commands.hybrid_command(name="delete_obscura_vcs")
+    @commands.has_role(ADMIN_ROLE)
+    async def delete_obscura_vcs(self, ctx: commands.Context):
+        """
+        Deletes all voice channels in categories starting with 'OBSCURA VOICE CHANNELS'.
+        """
+        guild = ctx.guild
+
+        if not guild:
+            logger.exception("Bot not in any guild!")
+            return
+
+        if not guild.categories:
+            logger.exception("The fuck, no categories found??")
+            return
+
+        deleted = []
+
+        # Filter categories that match
+        target_categories = [
+            category
+            for category in guild.categories
+            if category.name.startswith("OBSCURA VOICE CHANNELS")
+        ]
+
+        if not target_categories:
+            await ctx.reply("No matching categories found.", ephemeral=True)
+            return
+
+        # Loop through each category and delete its voice channels
+        for category in target_categories:
+            for channel in category.voice_channels:
+                try:
+                    await channel.delete()
+                    deleted.append(channel.name)
+                    await asyncio.sleep(1)  # to avoid hitting rate limits
+                except discord.HTTPException as e:
+                    await ctx.send(f"Failed to delete {channel.name}: {e}")
+
+        await ctx.reply(f"Deleted {len(deleted)} voice channels.", ephemeral=True)
 
 
 async def setup(bot: commands.Bot):

@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.abc import PrivateChannel
 
 import asyncio
 from logging import getLogger
@@ -147,10 +146,25 @@ class StartupMessages(commands.Cog):
             color=discord.Color.dark_purple(),
         )
 
+        embed1 = discord.Embed(
+            title="📒 Rule Book:",
+            description="The game must be played in teams of four members only. "
+            "Each team must have 2 Hackers and 2 Wizards. "
+            "Only the team leader can create the team and assign roles. "
+            "Team members must join using their unique team code. "
+            "Every team will have a dedicated Discord channel for communication. Make sure you provide the correct Discord IDs and join the server in a timely manner. "
+            "The game will begin only once all four members have joined. "
+            "Hackers shall have to solve the puzzles where as Wizards will be responsible to fight the enemy. "
+            "Each team will get unique set of puzzles to crack. "
+            "If any player dies, only that player will be respawned to the last checkpoint. The team’s progress will not be lost. "
+            "Communication is the key to survival.",
+            color=discord.Color.dark_purple(),
+        )
+
         embed.set_thumbnail(url="attachment://logo.png")
 
         logo = discord.File(path.join("assets", "logo.png"), filename="logo.png")
-        await channel.send(embed=embed, file=logo)
+        await channel.send(embeds=[embed, embed1], file=logo)
 
 
 async def setup(bot: commands.Bot):

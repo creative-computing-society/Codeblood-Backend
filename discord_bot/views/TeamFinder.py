@@ -70,7 +70,7 @@ class LookingForTeamView(discord.ui.View):
             )
             return
 
-        if len(lookers_team["players"] > 1):
+        if len(lookers_team["players"]) > 1:
             embed = create_failure_embed("You need to run solo to join other teams!")
             await interaction.response.send_message(
                 embed=embed, ephemeral=True, delete_after=10
@@ -186,3 +186,5 @@ class LookingForTeamView(discord.ui.View):
             "INSERT INTO lft_users (discord_id) VALUES (?)", (interaction.user.id,)
         )
         await db.commit()
+
+        await interaction.delete_original_response()
