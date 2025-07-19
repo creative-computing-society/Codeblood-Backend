@@ -71,7 +71,7 @@ async def check_answer(request : Request , payload: CheckAnswerPayload, email: s
     if not question:
         return JSONResponse({"error": "Invalid question ID"}, status_code=400)
 
-    if question["Answer"] == payload.answer:
+    if question["Answer"].lower() == payload.answer.lower():
         result = await points.update_one(
             {"team_code": payload.team_id},
             {"$inc": {"Points": question["Points"], "Question_solved": 1}},
