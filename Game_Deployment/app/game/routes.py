@@ -92,7 +92,7 @@ async def team_status_update(request: Request, payload: TeamStatusUpdatePayload,
     now = datetime.utcnow()
     points = request.app.state.points  # Access the points collection from app state
 
-    if not points:
+    if points is None:
         return JSONResponse({"error": "Points collection not initialized"}, status_code=500)
 
     # Fetch the team data
