@@ -30,12 +30,12 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     lobbies = request.app.state.lobbies
     teams = request.app.state.teams
 
-    if not lobbies or not teams:
+    if lobbies is None or teams is None:
         return JSONResponse({"error": "Database collections not initialized"}, status_code=500)
 
     # Fetch the user's team and player data in a single query
     team = await teams.find_one({"players.email": email}, {"players.$": 1, "team_code": 1})
-    if not team:
+    if team is None:
         return JSONResponse({"error": "Player not registered in any team"}, status_code=404)
 
     # Extract the logged-in player's data
@@ -44,7 +44,7 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
     # Check if a lobby already exists for the team
     team_code = team["team_code"]
     lobby = await lobbies.find_one({"team_code": team_code})
-    if not lobby:
+    if lobby is None:
         # Create a new lobby if it doesn't exist
         lobby_id = str(uuid4())[:8]
         lobby_data = {
