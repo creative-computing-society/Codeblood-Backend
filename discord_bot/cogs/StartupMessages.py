@@ -30,17 +30,21 @@ class StartupMessages(commands.Cog):
         await self.bot.wait_until_ready()
 
         try:
-            await self.send_join_team_event_message()
-            await self.send_about_event_message()
-            await self.send_rules_event_message()
+            await asyncio.gather(
+                self.send_about_event_message(),
+                self.send_join_team_event_message(),
+                self.send_rules_event_message(),
+            )
         except Exception:
             logger.exception("Error in send_event_message")
 
-    async def _validate(self, channel_id: int, channel_name):
+    async def _validate(
+        self, channel_id: int, channel_name
+    ) -> discord.TextChannel | None:
         guild = self.bot.guilds[0]
 
         if not guild:
-            logger.warning("Guild not found. Aborting on_ready task.")
+            logger.warning("Guild not found. Aborting message sending task.")
             return None
 
         channel = self.bot.get_channel(channel_id)
@@ -49,9 +53,7 @@ class StartupMessages(commands.Cog):
             category = discord.utils.get(guild.categories, name=CATEGORY_NAME)
             channel = await guild.create_text_channel(channel_name, category=category)
 
-        if isinstance(
-            channel, (discord.ForumChannel, PrivateChannel, discord.CategoryChannel)
-        ):
+        if not isinstance(channel, discord.TextChannel):
             logger.error("Channel must be a Text Channel!")
             return None
 
@@ -125,21 +127,21 @@ class StartupMessages(commands.Cog):
         embed = discord.Embed(
             title="📒 General Rules:",
             description=(
-                "**1. Be Respectful**\n"
+                "**1. Be Respectful**"
                 "Treat all participants with respect and kindness. Harassment, hate speech, or discrimination of any form will not be tolerated.\n\n"
-                "**2. No NSFW Content**\n"
+                "**2. No NSFW Content**"
                 "Sharing explicit or inappropriate content is strictly prohibited.\n\n"
-                "**3. No Spam**\n"
+                "**3. No Spam**"
                 "Avoid spamming the chat with repetitive messages, images, or links. Keep the discussions meaningful and relevant.\n\n"
-                "**4. Use Channels Appropriately**\n"
+                "**4. Use Channels Appropriately**"
                 "Each channel has a specific purpose. Please ensure your discussions are relevant to the designated topics.\n\n"
-                "**5. No Self-Promotion**\n"
+                "**5. No Self-Promotion**"
                 "Self-promotion or advertising your own content without prior permission from organizers is not allowed.\n\n"
-                "**6. Report Issues**\n"
+                "**6. Report Issues**"
                 "If you encounter any issues or witness rule violations, report them to the moderators promptly.\n\n"
-                "**7. Maintain Dignity**\n"
+                "**7. Maintain Dignity**"
                 "Uphold the integrity and dignity of the game and all participants.\n\n"
-                "**8. Report Offenses**\n"
+                "**8. Report Offenses**"
                 "If someone offends or annoys you, report the message to the CCS team and contact a Core. Provide proof, such as screenshots, so appropriate action can be taken. Do not engage in a flame war."
             ),
             color=discord.Color.dark_purple(),

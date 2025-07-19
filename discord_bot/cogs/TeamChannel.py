@@ -126,6 +126,27 @@ class TeamChannels(commands.Cog):
         )
         resolved_members = list(filter(None, resolved_members))
 
+        # Check if VC already exists
+        existing_channel = discord.utils.get(guild.voice_channels, name=team_name)
+        if existing_channel:
+            # Cleanup old permissions
+            cleanup_tasks = [
+                existing_channel.set_permissions(target, overwrite=None)
+                for target in existing_channel.overwrites
+                if isinstance(target, discord.Member) and target not in resolved_members
+            ]
+            update_tasks = [
+                existing_channel.set_permissions(
+                    member,
+                    overwrite=discord.PermissionOverwrite(
+                        view_channel=True, connect=True
+                    ),
+                )
+                for member in resolved_members
+            ]
+            await asyncio.gather(*cleanup_tasks, *update_tasks)
+            return
+
         # Build overwrites for team members
         overwrites: Mapping[Any, discord.PermissionOverwrite] = {
             guild.default_role: discord.PermissionOverwrite(
@@ -162,27 +183,6 @@ class TeamChannels(commands.Cog):
                     )
                 },
             )
-
-        # Check if VC already exists
-        existing_channel = discord.utils.get(category.voice_channels, name=team_name)
-        if existing_channel:
-            # Cleanup old permissions
-            cleanup_tasks = [
-                existing_channel.set_permissions(target, overwrite=None)
-                for target in existing_channel.overwrites
-                if isinstance(target, discord.Member) and target not in resolved_members
-            ]
-            update_tasks = [
-                existing_channel.set_permissions(
-                    member,
-                    overwrite=discord.PermissionOverwrite(
-                        view_channel=True, connect=True
-                    ),
-                )
-                for member in resolved_members
-            ]
-            await asyncio.gather(*cleanup_tasks, *update_tasks)
-            return
 
         # Create VC
         await guild.create_voice_channel(
