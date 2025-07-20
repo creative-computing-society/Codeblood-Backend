@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import JSONResponse
 from app.utils.jwt import verify_jwt
 from app.database import teams, points, players, lobbies
