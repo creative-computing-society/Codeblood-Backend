@@ -9,6 +9,7 @@ import json
 from app.limitting import limiter
 from app.utils.auth import verify_cookie
 import os
+from bson.json_util import dumps
 game_router = APIRouter()
 from pathlib import Path
 
@@ -144,14 +145,11 @@ async def leaderboard(request: Request, skip: int = Query(0), limit: int = Query
 
     try:
         # Fetch and sort leaderboard data by Points only, with pagination
-        teams_data = await points.find().skip(skip).limit(limit).sort("Points", -1).to_list(None)
-        # Convert ObjectId to string for JSON serialization
-        leaderboard = []
-        for team in teams_data:
-            team = dict(team)
-            if "_id" in team:
-                team["_id"] = str(team["_id"])
-            leaderboard.append(team)
-        return JSONResponse(leaderboard)
+        teams_data_cursor = points.find().sort("Points", -1).skip(skip).limit(limit)
+        teams_data = await teams_data_cursor.to_list(None)
+
+        # Use bson.json_util.dumps to serialize ObjectId and other BSON types
+        return JSONResponse(content=dumps(teams_data), media_type="application/json")
+    
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
