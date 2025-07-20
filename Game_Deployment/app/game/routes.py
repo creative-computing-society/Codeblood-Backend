@@ -137,7 +137,7 @@ async def individual_status_update(request : Request, payload: IndividualStatusU
 
 @game_router.get("/leaderboard")
 @limiter.limit("5/minute")
-async def leaderboard(request: Request, email: str = Depends(verify_cookie), skip: int = Query(0), limit: int = Query(10)):
+async def leaderboard(request: Request, skip: int = Query(0), limit: int = Query(10)):
     points = request.app.state.points  # Access the points collection from app state
     if points is None:
         return JSONResponse({"error": "Points collection not initialized"}, status_code=500)
@@ -145,7 +145,13 @@ async def leaderboard(request: Request, email: str = Depends(verify_cookie), ski
     try:
         # Fetch and sort leaderboard data by Points only, with pagination
         teams_data = await points.find().skip(skip).limit(limit).sort("Points", -1).to_list(None)
-        leaderboard = [team for team in teams_data]  # No Pydantic model validation
+        # Convert ObjectId to string for JSON serialization
+        leaderboard = []
+        for team in teams_data:
+            team = dict(team)
+            if "_id" in team:
+                team["_id"] = str(team["_id"])
+            leaderboard.append(team)
         return JSONResponse(leaderboard)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
