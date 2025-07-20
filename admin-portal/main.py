@@ -3,7 +3,9 @@ from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
+from uuid import uuid4
 
+4
 from datetime import datetime, timedelta
 import os
 import uvicorn
@@ -168,6 +170,96 @@ async def bulk_mail(background_tasks: BackgroundTasks):
         )
 
     return RedirectResponse("/dashboard", status_code=302)
+
+from bson import ObjectId
+from uuid import uuid4
+from fastapi.responses import JSONResponse
+from datetime import datetime
+import random
+
+# Helper function to assign roles
+def assign_roles(players):
+    """Randomly assign 2 hackers and 2 wizards among 4 players."""
+    if len(players) != 4:
+        return players  # Only assign if 4 players
+
+    random.shuffle(players)
+    for i, player in enumerate(players):
+        player["is_hacker"] = i < 2
+        player["is_wizard"] = not player["is_hacker"]
+    return players
+
+@app.post("/auto-merge-teams")
+async def auto_merge_teams():
+    teams = await teams_col.find().to_list(None)
+
+    single_player_teams = [t for t in teams if len(t["players"]) == 1]
+    two_player_teams = [t for t in teams if len(t["players"]) == 2]
+    three_player_teams = [t for t in teams if len(t["players"]) == 3]
+    four_player_teams = [t for t in teams if len(t["players"]) == 4]  # untouched
+
+    merged_teams = []
+
+    # Step 1: Merge 3-player teams with 1-player teams
+    while three_player_teams and single_player_teams:
+        t3 = three_player_teams.pop(0)
+        t1 = single_player_teams.pop(0)
+
+        players = assign_roles(t3["players"] + t1["players"])
+
+        new_team = {
+            "team_name": f"{t3['team_name']} + {t1['team_name']}",
+            "team_leader_email": t3["team_leader_email"],
+            "players": players,
+            "team_code": str(uuid4())[:8],
+        }
+        merged_teams.append(new_team)
+
+    # Step 2: Merge leftover single-player teams into groups of 4
+    while len(single_player_teams) >= 4:
+        group = single_player_teams[:4]
+        single_player_teams = single_player_teams[4:]
+
+        players = assign_roles([p for team in group for p in team["players"]])
+        new_team = {
+            "team_name": " + ".join([team["team_name"] for team in group]),
+            "team_leader_email": players[0]["email"],
+            "players": players,
+            "team_code": str(uuid4())[:8],
+        }
+        merged_teams.append(new_team)
+
+    # Step 3: Merge remaining 2-player teams into pairs
+    while len(two_player_teams) >= 2:
+        t2a = two_player_teams.pop(0)
+        t2b = two_player_teams.pop(0)
+
+        players = assign_roles(t2a["players"] + t2b["players"])
+        new_team = {
+            "team_name": f"{t2a['team_name']} + {t2b['team_name']}",
+            "team_leader_email": players[0]["email"],
+            "players": players,
+            "team_code": str(uuid4())[:8],
+        }
+        merged_teams.append(new_team)
+
+    # Step 4: Delete old (incomplete) teams and insert new merged ones
+    if merged_teams:
+        old_team_ids = [t["_id"] for t in teams if len(t["players"]) < 4]
+        await teams_col.delete_many({"_id": {"$in": old_team_ids}})
+        await teams_col.insert_many(merged_teams)
+
+        # Convert _id for serialization
+        for t in merged_teams:
+            t["_id"] = str(t.get("_id", ""))
+
+        return JSONResponse({
+            "message": "Teams auto-merged successfully",
+            "merged_teams": merged_teams
+        })
+
+    return JSONResponse({"message": "No teams were eligible for merging"})
+
 
 # ------------------- UVICORN -------------------
 if __name__ == "__main__":
