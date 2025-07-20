@@ -141,8 +141,10 @@ async def leaderboard(request: Request, email: str = Depends(verify_cookie), ski
     if points is None:
         return JSONResponse({"error": "Points collection not initialized"}, status_code=500)
 
-    # Fetch and sort leaderboard data with pagination
-    teams_data = await points.find().skip(skip).limit(limit).sort([("Points", -1), ("Total_Time_To_Clear_Levels", 1), ("Levels_Cleared", -1)]).to_list(None)
-    leaderboard = [Points(**team).dict() for team in teams_data]
-
-    return JSONResponse(leaderboard)
+    try:
+        # Fetch and sort leaderboard data with pagination
+        teams_data = await points.find().skip(skip).limit(limit).sort([("Points", -1), ("Total_Time_To_Clear_Levels", 1), ("Levels_Cleared", -1)]).to_list(None)
+        leaderboard = [Points(**team).dict() for team in teams_data]
+        return JSONResponse(leaderboard)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
