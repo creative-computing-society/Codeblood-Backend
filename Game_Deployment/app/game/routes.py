@@ -145,7 +145,7 @@ async def leaderboard(request: Request, email: str = Depends(verify_cookie), ski
     try:
         # Fetch and sort leaderboard data by Points only, with pagination
         teams_data = await points.find().skip(skip).limit(limit).sort("Points", -1).to_list(None)
-        leaderboard = [Points(**team).dict() for team in teams_data]
+        leaderboard = [team for team in teams_data]  # No Pydantic model validation
         return JSONResponse(leaderboard)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
