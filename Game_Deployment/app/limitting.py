@@ -2,5 +2,5 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 # Shared limiter instance
-limiter = Limiter(key_func=get_remote_address, default_limits=["1000/minute"])
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 #OK(*(*()))
