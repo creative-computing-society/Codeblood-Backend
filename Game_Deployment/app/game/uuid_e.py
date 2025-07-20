@@ -1,14 +1,14 @@
-import pandas as pd
-import uuid
+# import pandas as pd
+# import uuid
 
-csv_path = "SPOILER_questions_combined.csv"
-df = pd.read_csv(csv_path)
-
-
-df['question_id'] = [str(uuid.uuid4()) for _ in range(len(df))]
+# csv_path = "SPOILER_questions_combined.csv"
+# df = pd.read_csv(csv_path)
 
 
-df.to_csv("SPOILER_questions_with_ids.csv", index=False)
+# df['question_id'] = [str(uuid.uuid4()) for _ in range(len(df))]
+
+
+# df.to_csv("SPOILER_questions_with_ids.csv", index=False)
 
 
 
@@ -16,7 +16,7 @@ import pandas as pd
 import json
 
 
-df = pd.read_csv("SPOILER_questions_with_ids.csv")
+df = pd.read_csv("SPOILER_questions_combined.csv")
 
 
 result = {
