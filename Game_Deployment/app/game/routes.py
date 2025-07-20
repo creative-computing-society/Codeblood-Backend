@@ -136,10 +136,13 @@ async def individual_status_update(request : Request, payload: IndividualStatusU
 
 @game_router.get("/leaderboard")
 @limiter.limit("5/minute")
-async def leaderboard(request: Request, email: str = Depends(verify_cookie)):
-    teams_data = await points.find().to_list(None)
-    leaderboard = sorted(
-        [Points(**team) for team in teams_data],
-        key=lambda x: (-x.Points, x.Total_Time_To_Clear_Levels, -x.Levels_Cleared)
-    )
-    return JSONResponse([team.dict() for team in leaderboard])
+async def leaderboard(request: Request, email: str = Depends(verify_cookie), skip: int = Query(0), limit: int = Query(10)):
+    points = request.app.state.points  # Access the points collection from app state
+    if points is None:
+        return JSONResponse({"error": "Points collection not initialized"}, status_code=500)
+
+    # Fetch and sort leaderboard data with pagination
+    teams_data = await points.find().skip(skip).limit(limit).sort([("Points", -1), ("Total_Time_To_Clear_Levels", 1), ("Levels_Cleared", -1)]).to_list(None)
+    leaderboard = [Points(**team).dict() for team in teams_data]
+
+    return JSONResponse(leaderboard)
