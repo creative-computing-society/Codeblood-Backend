@@ -20,7 +20,7 @@ from app.registeration.models import RegisterTeam, JoinTeam, TeamDashboard, Leav
 
 router = APIRouter()
 logger = getLogger(__name__)
-ALLOWED_ORIGINS = [getenv("FRONTEND_URL")]
+ALLOWED_ORIGINS = [getenv("FRONTEND_URL"), "https://obscura.ccstiet.com"]
 MAIL_USERNAME = getenv("MAIL_USERNAME")
 # print("MAIL_USERNAME:", MAIL_USERNAME)  # Debugging line to check if MAIL_USERNAME is set
 MAIL_PASSWORD = getenv("MAIL_PASSWORD")
