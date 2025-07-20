@@ -61,7 +61,7 @@ async def send_email(name: str, team_name: str, email: str, template_path: str, 
     await fm.send_message(message)
 
 @router.get("/checkRegistered")
-@limiter.limit("20/minute") 
+@limiter.limit("100/minute") 
 async def is_authenticated(request: Request):
 
     origin = request.headers.get("origin")
@@ -98,7 +98,7 @@ async def is_authenticated(request: Request):
         return {"registered": False}
     
 @router.get("/verify")
-@limiter.limit("20/minute")
+@limiter.limit("100/minute")
 async def token_verify(request: Request):
     """
     Verifies the validity of the session token received in the cookie.
@@ -133,7 +133,7 @@ async def token_verify(request: Request):
 
 
 @router.post("/create-team")
-@limiter.limit("30/minute") 
+@limiter.limit("100/minute") 
 async def register_team(
     request: Request, data: RegisterTeam, user=Depends(get_current_user)
 ):
@@ -189,7 +189,7 @@ async def register_team(
         )
 
 @router.post("/join-team")
-@limiter.limit("30/minute") 
+@limiter.limit("100/minute") 
 async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_user)):
     teams: AsyncIOMotorCollection = request.app.state.teams
 
@@ -243,7 +243,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
 
 
 @router.get("/team-dashboard")
-@limiter.limit("25/minute") 
+@limiter.limit("100/minute")
 async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user)):
     """
     Fetches the team dashboard for the logged-in user.
@@ -286,7 +286,7 @@ async def fetch_team_dashbaord(request: Request, user=Depends(get_current_user))
     return JSONResponse(existing)
 
 @router.post("/team-dashboard")
-@limiter.limit("25/minute") 
+@limiter.limit("100/minute")
 async def update_team_dashboard(
     request: Request, data: TeamDashboard, user=Depends(get_current_user)
 ):
@@ -342,7 +342,7 @@ async def update_team_dashboard(
 
 
 @router.post("/leave-team")
-@limiter.limit("20/minute")
+@limiter.limit("100/minute")
 async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_current_user)):
     """
     Allows a non-team leader user to leave a team.
@@ -393,7 +393,7 @@ async def leave_team(request: Request, data: LeaveTeamRequest, user=Depends(get_
         )
 
 @router.post("/remove-from-team")
-@limiter.limit("20/minute")
+@limiter.limit("100/minute")
 async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=Depends(get_current_user)):
     """
     Allows the team leader to remove a user from the team.
@@ -456,7 +456,7 @@ async def remove_from_team(request: Request, data: RemoveFromTeamRequest, user=D
         )
 
 @router.delete("/delete-team")
-@limiter.limit("15/minute")
+@limiter.limit("100/minute")
 async def delete_team(request: Request, user=Depends(get_current_user)):
     """
     Allows the team leader to delete the team if they are the only member.
@@ -503,7 +503,7 @@ async def delete_team(request: Request, user=Depends(get_current_user)):
 
 
 @router.put("/change_discord")
-@limiter.limit("15/minute")
+@limiter.limit("100/minute")
 async def change_discord(request: Request):
     """
     Updates the Discord ID of a user in the team database.
@@ -573,7 +573,7 @@ async def change_discord(request: Request):
         )
 
 @router.put("/change_team_name")
-@limiter.limit("15/minute")
+@limiter.limit("100/minute")
 async def change_team_name(request: Request):
     """
     Updates the team name for the team in the database.
