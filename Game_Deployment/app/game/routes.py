@@ -55,6 +55,17 @@ async def set_lobby(request: Request, email: str = Depends(verify_cookie)):
         }
         await lobbies.insert_one(lobby_data)
         lobby = lobby_data
+    else:
+        # Check if the player is already in the lobby's players array
+        player_emails = [p["email"] for p in lobby.get("players", [])]
+        if player_data["email"] not in player_emails:
+            # Append the new player to the lobby's players array in the database
+            await lobbies.update_one(
+                {"team_code": team_code},
+                {"$push": {"players": player_data}}
+            )
+            # Fetch the updated lobby
+            lobby = await lobbies.find_one({"team_code": team_code})
 
     # Prepare the response
     response_data = {
