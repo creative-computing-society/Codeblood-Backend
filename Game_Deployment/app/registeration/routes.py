@@ -130,7 +130,7 @@ async def token_verify(request: Request):
 
     return {"valid": True}
 
-
+# ...existing code...
 
 @router.post("/create-team")
 @limiter.limit("100/minute") 
@@ -143,6 +143,7 @@ async def register_team(
     player_name = data.username
     discord_id = data.discord_id
     rollno = data.rollno
+    year = getattr(data, "year", None)  # Get year from frontend data
 
     check_user_task = teams.find_one({"players.email": user["email"]})
     check_team_task = teams.find_one({"team_name": team_name})
@@ -160,7 +161,10 @@ async def register_team(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Add year to player info
     team_info = generate_initial_team(team_name, player_name, user["email"], discord_id, rollno)
+    if team_info.get("players"):
+        team_info["players"][0]["year"] = year
 
     try:
         await teams.insert_one(team_info)
@@ -196,6 +200,7 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
     team_code = data.team_code
     discord_id = data.discord_id
     rollno = data.rollno
+    year = getattr(data, "year", None)  # Get year from frontend data
 
     existing_team = await teams.find_one({"players.email": user["email"]})
     if existing_team:
@@ -219,7 +224,11 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Add year to new player info
     update_info = add_player(team_code, data.username, user["email"], discord_id, rollno, existing_players)
+    if len(update_info) > 1 and isinstance(update_info[1], dict):
+        update_info[1]["$push"]["players"]["year"] = year
+
     result = await teams.update_one(*update_info)
 
     await add_teamid_to_user(request, team_code, user["email"])
@@ -240,6 +249,8 @@ async def join_team(request: Request, data: JoinTeam, user=Depends(get_current_u
         )
 
     return JSONResponse({"success": True}, status_code=status.HTTP_200_OK)
+
+# ...existing code...
 
 
 @router.get("/team-dashboard")
