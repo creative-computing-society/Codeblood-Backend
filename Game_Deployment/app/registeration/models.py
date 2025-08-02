@@ -8,6 +8,7 @@ class RegisterTeam(BaseModel):
     username: str
     discord_id: str
     rollno: str  # Correct field name to match frontend key
+    year : str
 
     @field_validator("team_name")
     @classmethod
@@ -36,6 +37,7 @@ class JoinTeam(BaseModel):
     username: str
     discord_id: str
     rollno: str  # Correct field name to match frontend key
+    year : str
 
     @field_validator("username", "discord_id")
     @classmethod
@@ -60,6 +62,7 @@ class Player(BaseModel):
     is_hacker: bool
     is_wizard: bool
     discord_id: str  # Add this field
+    year :str
 
     @field_validator("is_wizard")
     @classmethod
